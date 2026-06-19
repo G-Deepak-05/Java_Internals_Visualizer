@@ -12,6 +12,8 @@ public class SnapshotData {
     public String eventType;
     public long timestamp;
     public String stdout;
+    public String jitCompilerName;
+    public long totalJitTimeMs;
 
     public Map<String, HeapObjectData> heap = new LinkedHashMap<>();
 
@@ -62,6 +64,9 @@ public class SnapshotData {
         public String state;
         public boolean virtual;
         public String carrierThread;
+        public boolean holdsLocks;
+        public String waitingForMonitor;
+        public String ownsMonitor;
         public int stackDepth;
         public int priority;
         public boolean daemon;

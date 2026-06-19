@@ -7,7 +7,7 @@ import { useJvmStore } from '@/store/jvmStore';
 import { PRESET_PROGRAMS } from '@/lib/presets';
 import {
   Play, Square, Code2, Layers, MemoryStick, Activity,
-  FileCode, Type, Package, ChevronDown, RotateCcw, Terminal,
+  FileCode, Type, Package, ChevronDown, RotateCcw, Terminal, Zap,
 } from 'lucide-react';
 import type { PanelVisibility } from '@/types/jvm';
 
@@ -37,7 +37,8 @@ export function Toolbar({
   code, onCodeChange,
   mainClass, onMainClassChange,
 }: ToolbarProps) {
-  const { panels, togglePanel, clearSnapshots, snapshots } = useJvmStore();
+  const { panels, togglePanel, clearSnapshots, snapshots, currentStep } = useJvmStore();
+  const snapshot = snapshots[currentStep];
   const [presetOpen, setPresetOpen] = useState(false);
   const [mainClassInput, setMainClassInput] = useState(mainClass);
 
@@ -153,7 +154,16 @@ export function Toolbar({
         {}
         <div className="flex-1" />
 
-        {}
+        {/* JIT Compiler Status */}
+        {snapshot?.jitCompilerName && (
+          <div className="text-[10px] px-2 py-0.5 rounded border border-[#bfdbfe] bg-[#eff6ff] text-[#2563eb] font-mono hidden md:flex items-center gap-1"
+            title={`JIT Compiler: ${snapshot.jitCompilerName}`}>
+            <Zap size={11} className="text-[#2563eb]" />
+            <span>JIT: {snapshot.totalJitTimeMs}ms</span>
+          </div>
+        )}
+
+        {/* Snapshot Count */}
         {snapshots.length > 0 && (
           <div className="text-xs text-[var(--text-secondary)] hidden sm:block font-mono">
             {snapshots.length} snapshots
