@@ -24,6 +24,8 @@ public class JivRuntime {
 
     private static final Map<Integer, String> identityMap = new ConcurrentHashMap<>();
 
+    private static final Map<String, Object> objectReferences = new ConcurrentHashMap<>();
+
     private static final Set<String> loadedClasses = ConcurrentHashMap.newKeySet();
 
     private static final int THROTTLE = 1;
@@ -65,7 +67,7 @@ public class JivRuntime {
         emitSnapshot("LINE_CHANGE", className, methodName, lineNumber);
     }
 
-    public static void onMethodEnter(String className, String methodName, int lineNumber) {
+    public static void onMethodEnter(String className, String methodName, int lineNumber, Object[] params, String[] paramNames) {
         loadedClasses.add(className);
         String threadName = Thread.currentThread().getName();
 
@@ -74,6 +76,23 @@ public class JivRuntime {
         frame.methodName = methodName;
         frame.lineNumber = lineNumber;
         frame.active = true;
+
+        if (params != null && paramNames != null) {
+            for (int i = 0; i < params.length; i++) {
+                Object val = params[i];
+                String name = paramNames[i];
+                if (val == null) {
+                    frame.parameters.put(name, null);
+                } else if (isPrimitive(val)) {
+                    frame.parameters.put(name, val);
+                } else {
+                    int identityHash = System.identityHashCode(val);
+                    String objectId = identityMap.computeIfAbsent(identityHash, k -> "obj_" + k);
+                    frame.parameters.put(name, objectId);
+                    registerObject(val);
+                }
+            }
+        }
 
         Deque<SnapshotData.FrameData> stack = shadowStacks.computeIfAbsent(
             threadName, k -> new ArrayDeque<>());
@@ -132,7 +151,15 @@ public class JivRuntime {
 
         snapshot.gcEvents = collectGcEvents(step);
 
+        walkHeap();
+
         snapshot.heap = new LinkedHashMap<>(heapRegistry);
+
+        CompilationMXBean compBean = ManagementFactory.getCompilationMXBean();
+        if (compBean != null) {
+            snapshot.jitCompilerName = compBean.getName();
+            snapshot.totalJitTimeMs = compBean.getTotalCompilationTime();
+        }
 
         emitter.emit(snapshot);
     }
@@ -141,7 +168,7 @@ public class JivRuntime {
         Map<String, SnapshotData.ThreadData> result = new LinkedHashMap<>();
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long[] ids = mxBean.getAllThreadIds();
-        ThreadInfo[] infos = mxBean.getThreadInfo(ids);
+        ThreadInfo[] infos = mxBean.getThreadInfo(ids, true, true);
 
         for (ThreadInfo info : infos) {
             if (info == null) continue;
@@ -150,6 +177,17 @@ public class JivRuntime {
             td.id = info.getThreadId();
             td.state = info.getThreadState().name();
             td.stackDepth = info.getStackTrace().length;
+
+            if (info.getLockInfo() != null) {
+                td.waitingForMonitor = "obj_" + info.getLockInfo().getIdentityHashCode();
+            }
+
+            MonitorInfo[] monitors = info.getLockedMonitors();
+            if (monitors != null && monitors.length > 0) {
+                td.holdsLocks = true;
+                td.ownsMonitor = "obj_" + monitors[0].getIdentityHashCode();
+            }
+
             result.put(td.name, td);
         }
 
@@ -159,6 +197,9 @@ public class JivRuntime {
                 td.virtual = t.isVirtual();
                 td.daemon = t.isDaemon();
                 td.priority = t.getPriority();
+                if (t.isVirtual()) {
+                    td.carrierThread = getCarrierThreadName(t);
+                }
             }
         }
 
@@ -223,6 +264,8 @@ public class JivRuntime {
             k -> "obj_" + k);
 
         if (heapRegistry.containsKey(objectId)) return; 
+
+        objectReferences.put(objectId, obj);
 
         SnapshotData.HeapObjectData data = new SnapshotData.HeapObjectData();
         data.id = objectId;
@@ -296,5 +339,123 @@ public class JivRuntime {
         return v instanceof Integer || v instanceof Long || v instanceof Double
             || v instanceof Float || v instanceof Boolean || v instanceof Character
             || v instanceof Byte || v instanceof Short;
+    }
+
+    private static void walkHeap() {
+        for (SnapshotData.HeapObjectData data : heapRegistry.values()) {
+            data.reachable = false;
+            data.refCount = 0;
+        }
+
+        Set<Object> roots = new HashSet<>();
+        for (Deque<SnapshotData.FrameData> stack : shadowStacks.values()) {
+            for (SnapshotData.FrameData frame : stack) {
+                for (Object val : frame.locals.values()) {
+                    if (val instanceof String s && s.startsWith("obj_")) {
+                        Object obj = objectReferences.get(s);
+                        if (obj != null) roots.add(obj);
+                    }
+                }
+                for (Object val : frame.parameters.values()) {
+                    if (val instanceof String s && s.startsWith("obj_")) {
+                        Object obj = objectReferences.get(s);
+                        if (obj != null) roots.add(obj);
+                    }
+                }
+            }
+        }
+
+        Queue<Object> queue = new ArrayDeque<>(roots);
+        Set<String> visited = new HashSet<>();
+        for (Object root : roots) {
+            String id = identityMap.get(System.identityHashCode(root));
+            if (id != null) {
+                visited.add(id);
+                SnapshotData.HeapObjectData data = heapRegistry.get(id);
+                if (data != null) data.reachable = true;
+            }
+        }
+
+        while (!queue.isEmpty()) {
+            Object current = queue.poll();
+            String currentId = identityMap.get(System.identityHashCode(current));
+            if (currentId == null) continue;
+
+            List<Object> children = getReferencedObjects(current);
+            for (Object child : children) {
+                int childHash = System.identityHashCode(child);
+                String childId = identityMap.get(childHash);
+                if (childId == null) {
+                    registerObject(child);
+                    childId = identityMap.get(childHash);
+                }
+
+                if (childId != null) {
+                    SnapshotData.HeapObjectData childData = heapRegistry.get(childId);
+                    if (childData != null) {
+                        childData.reachable = true;
+                        childData.refCount++;
+                    }
+                    if (!visited.contains(childId)) {
+                        visited.add(childId);
+                        queue.add(child);
+                    }
+                }
+            }
+        }
+    }
+
+    private static List<Object> getReferencedObjects(Object obj) {
+        List<Object> refs = new ArrayList<>();
+        if (obj == null) return refs;
+        Class<?> cls = obj.getClass();
+        if (cls.isArray()) {
+            if (!cls.getComponentType().isPrimitive()) {
+                try {
+                    int length = java.lang.reflect.Array.getLength(obj);
+                    for (int i = 0; i < length; i++) {
+                        Object val = java.lang.reflect.Array.get(obj, i);
+                        if (val != null) refs.add(val);
+                    }
+                } catch (Exception ignored) {}
+            }
+        } else {
+            while (cls != null && cls != Object.class) {
+                for (Field field : cls.getDeclaredFields()) {
+                    if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) continue;
+                    if (field.getType().isPrimitive()) continue;
+                    field.setAccessible(true);
+                    try {
+                        Object val = field.get(obj);
+                        if (val != null) refs.add(val);
+                    } catch (Exception ignored) {}
+                }
+                cls = cls.getSuperclass();
+            }
+        }
+        return refs;
+    }
+
+    private static String getCarrierThreadName(Thread thread) {
+        if (!thread.isVirtual()) return null;
+        try {
+            Field carrierField = thread.getClass().getDeclaredField("carrierThread");
+            carrierField.setAccessible(true);
+            Thread carrier = (Thread) carrierField.get(thread);
+            if (carrier != null) {
+                return carrier.getName();
+            }
+        } catch (Exception e1) {
+            try {
+                Class<?> vtClass = Class.forName("java.lang.VirtualThread");
+                if (vtClass.isInstance(thread)) {
+                    Field carrierField = vtClass.getDeclaredField("carrierThread");
+                    carrierField.setAccessible(true);
+                    Thread carrier = (Thread) carrierField.get(thread);
+                    if (carrier != null) return carrier.getName();
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 }

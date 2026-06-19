@@ -80,6 +80,8 @@ export interface JvmSnapshot {
   eventType?: JvmEventType;
   timestamp: number;
   stdout?: string;
+  jitCompilerName?: string;
+  totalJitTimeMs?: number;
 }
 
 export type JvmEventType =

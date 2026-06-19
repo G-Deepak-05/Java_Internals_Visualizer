@@ -2,7 +2,7 @@
 
 import { useJvmStore } from '@/store/jvmStore';
 import type { ThreadStatus } from '@/types/jvm';
-import { Activity } from 'lucide-react';
+import { Activity, Lock } from 'lucide-react';
 
 const STATE_COLORS: Record<ThreadStatus, { bg: string; border: string; dot: string }> = {
   RUNNABLE:      { bg: '#f0fdf4', border: '#bbf7d0', dot: '#16a34a' },
@@ -58,6 +58,18 @@ export function ThreadPanel() {
                 {thread.virtual && thread.carrierThread && (
                   <div className="text-[9px] text-[#44445a] mt-1">
                     on: {thread.carrierThread}
+                  </div>
+                )}
+                {thread.holdsLocks && thread.ownsMonitor && (
+                  <div className="text-[9px] text-[#dc2626] mt-1.5 flex items-center gap-1 font-mono">
+                    <Lock size={10} className="flex-shrink-0" />
+                    <span>owns: {thread.ownsMonitor.replace('obj_', '#')}</span>
+                  </div>
+                )}
+                {thread.waitingForMonitor && (
+                  <div className="text-[9px] text-[#ea580c] mt-1.5 flex items-center gap-1 font-mono animate-pulse">
+                    <Lock size={10} className="flex-shrink-0" />
+                    <span>waiting on: {thread.waitingForMonitor.replace('obj_', '#')}</span>
                   </div>
                 )}
               </div>

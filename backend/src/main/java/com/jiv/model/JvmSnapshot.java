@@ -39,4 +39,8 @@ public class JvmSnapshot {
     private long timestamp;
 
     private String stdout;
+
+    private String jitCompilerName;
+
+    private long totalJitTimeMs;
 }

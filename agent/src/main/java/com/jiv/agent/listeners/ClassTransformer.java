@@ -98,14 +98,56 @@ public class ClassTransformer implements ClassFileTransformer {
         }
 
         if (insertEnterPoint != null) {
+            org.objectweb.asm.Type[] argTypes = org.objectweb.asm.Type.getArgumentTypes(mn.desc);
+            boolean isStatic = (mn.access & Opcodes.ACC_STATIC) != 0;
+            String[] paramNames = new String[argTypes.length];
+            int slot = isStatic ? 0 : 1;
+            for (int i = 0; i < argTypes.length; i++) {
+                String name = "arg" + i;
+                if (mn.localVariables != null) {
+                    for (LocalVariableNode var : mn.localVariables) {
+                        if (var.index == slot) {
+                            name = var.name;
+                            break;
+                        }
+                    }
+                }
+                paramNames[i] = name;
+                slot += argTypes[i].getSize();
+            }
+
+            InsnList paramsList = new InsnList();
+            paramsList.add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
+            paramsList.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/Object"));
+            slot = isStatic ? 0 : 1;
+            for (int i = 0; i < argTypes.length; i++) {
+                paramsList.add(new InsnNode(Opcodes.DUP));
+                paramsList.add(new IntInsnNode(Opcodes.BIPUSH, i));
+                addLoadAndBox(paramsList, slot, argTypes[i].getDescriptor());
+                paramsList.add(new InsnNode(Opcodes.AASTORE));
+                slot += argTypes[i].getSize();
+            }
+
+            InsnList namesList = new InsnList();
+            namesList.add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
+            namesList.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
+            for (int i = 0; i < argTypes.length; i++) {
+                namesList.add(new InsnNode(Opcodes.DUP));
+                namesList.add(new IntInsnNode(Opcodes.BIPUSH, i));
+                namesList.add(new LdcInsnNode(paramNames[i]));
+                namesList.add(new InsnNode(Opcodes.AASTORE));
+            }
+
             InsnList enterList = new InsnList();
             enterList.add(new LdcInsnNode(className));
             enterList.add(new LdcInsnNode(mn.name));
             enterList.add(new IntInsnNode(Opcodes.SIPUSH, currentLine));
+            enterList.add(paramsList);
+            enterList.add(namesList);
             enterList.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
                 "com/jiv/agent/listeners/JivRuntime",
                 "onMethodEnter",
-                "(Ljava/lang/String;Ljava/lang/String;I)V",
+                "(Ljava/lang/String;Ljava/lang/String;I[Ljava/lang/Object;[Ljava/lang/String;)V",
                 false));
             mn.instructions.insertBefore(insertEnterPoint, enterList);
         }
@@ -185,8 +227,10 @@ public class ClassTransformer implements ClassFileTransformer {
     }
 
     private void addLoadAndBox(InsnList il, LocalVariableNode var) {
-        String desc = var.desc;
-        int index = var.index;
+        addLoadAndBox(il, var.index, var.desc);
+    }
+
+    private void addLoadAndBox(InsnList il, int index, String desc) {
         if (desc.equals("Z")) {
             il.add(new VarInsnNode(Opcodes.ILOAD, index));
             il.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false));

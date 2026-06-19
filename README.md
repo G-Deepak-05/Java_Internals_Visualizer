@@ -20,12 +20,14 @@ JIV is an educational and debugging platform that visualizes how Java programs e
 
 | Feature | Description |
 |---|---|
-| **Monaco Code Editor** | VS Code engine with JIV dark theme, Java syntax, active-line highlighting |
+| **Monaco Code Editor** | VS Code engine with JIV theme, Java syntax, active-line highlighting |
 | **Stack Visualization** | Animated frame push/pop, depth coloring, local variable table, recursion counter |
 | **Heap Explorer** | React Flow interactive graph, object nodes with fields, generation labels |
 | **Reference Tracking** | Directed edges between stack vars and heap objects, animated on hover |
-| **GC Reachability** | Unreachable objects turn red; GC event banner with phase info |
-| **Thread Panel** | All JVM threads with live state badges (RUNNABLE/BLOCKED/WAITING etc.) |
+| **GC & Heap Traversal** | BFS reflection heap walker starting from stack frames calculating precise reachability and reference counts |
+| **Thread Panel** | All JVM threads with live state badges, including virtual thread carrier platform thread mappings |
+| **Synchronized Lock Visuals**| Displays lock ownership and wait monitors (e.g. `owns` or `waiting on` lock) mapped to Heap Canvas nodes |
+| **JIT compiler Metrics** | Live JIT compiler name and total compilation time tracking |
 | **Bytecode Panel** | Dual-view of current method bytecode with active instruction highlighted |
 | **String Pool Panel** | Live view of interned string pool contents |
 | **Metaspace Panel** | Loaded classes split by user vs system classes |
@@ -36,16 +38,10 @@ JIV is an educational and debugging platform that visualizes how Java programs e
 | **Panel Toggles** | Show/hide any panel from the toolbar |
 | **Sandboxed Execution** | Docker-isolated, memory/CPU-limited, 15s timeout |
 
-### Phase 2 — Coming Soon
+### Phase 2 — Roadmap
 
-- Virtual Thread + carrier thread mapping
-- synchronized block / monitor visualization
 - Deadlock detection overlay
 - Structured Concurrency (Java 21)
-
-### Phase 3 — Roadmap
-
-- JIT compilation event visualization
 - Generational GC animation (Young → Survivor → Old)
 - Spring Boot context visualization
 - AI-powered "Why was this object GC'd?" explanations
