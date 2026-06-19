@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+  # ── Frontend ────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_WS_URL=http://localhost:8080/ws
+    depends_on:
+      - backend
+    networks:
+      - jiv-net
+
+  # ── Backend ─────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/jivdb
+      - SPRING_DATASOURCE_USERNAME=jiv
+      - SPRING_DATASOURCE_PASSWORD=jivpassword
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker for sandbox
+      - agent-jar:/agent:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - jiv-net
+
+  # ── PostgreSQL ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: jivdb
+      POSTGRES_USER: jiv
+      POSTGRES_PASSWORD: jivpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jiv -d jivdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jiv-net
+
+  # ── Redis ────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - jiv-net
+
+volumes:
+  postgres-data:
+  agent-jar:
+
+networks:
+  jiv-net:
+    driver: bridge

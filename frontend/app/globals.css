@@ -1,0 +1,333 @@
+@import "tailwindcss";
+
+/* ── Minimalist Light Theme Tokens ───────────────────────────────────────── */
+:root {
+  --bg-base: #f5f5f3;        /* Warm off-white background */
+  --bg-surface: #ffffff;     /* Pure white */
+  --bg-elevated: #ffffff;
+  --bg-panel: #ffffff;
+
+  --border: #e2e2dd;         /* Solid warm border */
+  --border-bright: #d8d8d3;  /* Slightly darker border for depth */
+
+  --accent-primary: #eab308;   /* Bold yellow accent */
+  --accent-primary-hover: #ca8a04;
+  --accent-charcoal: #111111;  /* High contrast black */
+  --accent-charcoal-hover: #222222;
+
+  --accent-green: #16a34a;
+  --accent-red: #dc2626;
+  --accent-orange: #ea580c;
+  --accent-blue: #2563eb;
+
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #888883;
+
+  /* Stack depth colors (for left borders) */
+  --stack-0: #111111;
+  --stack-1: #eab308;
+  --stack-2: #2563eb;
+  --stack-3: #16a34a;
+  --stack-4: #ea580c;
+
+  /* Generation colors */
+  --gen-young: #eab3080c;
+  --gen-young-border: #eab30844;
+  --gen-survivor: #2563eb0c;
+  --gen-survivor-border: #2563eb44;
+  --gen-old: #ea580c0c;
+  --gen-old-border: #ea580c44;
+
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* ── Base Reset ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent-charcoal); }
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.panel-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fafaf9;
+}
+
+.panel-header-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+/* ── Stack Frame ─────────────────────────────────────────────────────────── */
+.stack-frame {
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+
+.stack-frame-header {
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: #fafaf9;
+}
+
+.stack-frame-body {
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: #ffffff;
+}
+
+/* ── Heap Node ───────────────────────────────────────────────────────────── */
+.heap-node {
+  border-radius: 4px;
+  border: 1.5px solid var(--accent-charcoal);
+  background: var(--bg-surface);
+  min-width: 140px;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease;
+}
+
+.heap-node.unreachable {
+  border-color: var(--accent-red);
+  background: #fef2f2;
+}
+
+.heap-node.highlighted {
+  border-color: var(--accent-primary);
+  box-shadow: 3px 3px 0px rgba(234, 179, 8, 0.3);
+}
+
+.heap-node-header {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  background: #fafaf9;
+}
+
+.heap-node-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+}
+
+/* ── Thread Badge ────────────────────────────────────────────────────────── */
+.thread-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.thread-state-RUNNABLE { border-color: #bbf7d0; color: var(--accent-green); background: #f0fdf4; }
+.thread-state-BLOCKED  { border-color: #fecaca; color: var(--accent-red); background: #fef2f2; }
+.thread-state-WAITING  { border-color: #fed7aa; color: var(--accent-orange); background: #fff7ed; }
+.thread-state-TIMED_WAITING { border-color: #fef08a; color: var(--accent-charcoal); background: #fef9c3; }
+.thread-state-NEW       { border-color: #bfdbfe; color: var(--accent-blue); background: #eff6ff; }
+.thread-state-TERMINATED { border-color: var(--border); color: var(--text-muted); background: #fafaf9; }
+
+/* ── Generation Labels ───────────────────────────────────────────────────── */
+.gen-young    { background: var(--gen-young); border: 1px dashed var(--gen-young-border); }
+.gen-survivor { background: var(--gen-survivor); border: 1px dashed var(--gen-survivor-border); }
+.gen-old      { background: var(--gen-old); border: 1px dashed var(--gen-old-border); }
+
+/* ── Code Editor ─────────────────────────────────────────────────────────── */
+.monaco-wrapper {
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #ffffff;
+}
+
+/* ── Double Line Highlights (Monaco) ─────────────────────────────────────── */
+.just-executed-line-highlight {
+  background: rgba(120, 120, 120, 0.08) !important;
+  border-left: 3px solid #888883 !important;
+}
+.just-executed-line-glyph {
+  background: #888883 !important;
+  border-radius: 50% !important;
+  width: 8px !important;
+  height: 8px !important;
+  margin-top: 7px !important;
+  margin-left: 4px !important;
+}
+
+.next-line-highlight {
+  background: rgba(234, 179, 8, 0.15) !important;
+  border-left: 3px solid #eab308 !important;
+}
+.next-line-glyph {
+  background: #eab308 !important;
+  border-radius: 50% !important;
+  width: 8px !important;
+  height: 8px !important;
+  margin-top: 7px !important;
+  margin-left: 4px !important;
+}
+
+/* ── Splitter ─────────────────────────────────────────────────────── */
+.splitter {
+  background: var(--border);
+  transition: background 0.15s;
+  cursor: col-resize;
+  width: 4px;
+  flex-shrink: 0;
+}
+.splitter:hover { background: var(--accent-charcoal); }
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes gc-sweep {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.03); background: rgba(220, 38, 38, 0.1); }
+  100% { opacity: 0; transform: scale(0.95); }
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-primary);
+  outline: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent-charcoal);
+  color: #ffffff;
+  border-color: var(--accent-charcoal);
+}
+
+.btn-primary:hover {
+  background: var(--accent-charcoal-hover);
+  border-color: var(--accent-charcoal-hover);
+  transform: translateY(-0.5px);
+}
+
+.btn-ghost {
+  background: #ffffff;
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+}
+
+.btn-icon {
+  padding: 6px;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-color: var(--accent-charcoal);
+}
+
+.btn-icon.active {
+  background: #eab3080c;
+  border-color: var(--accent-primary);
+  color: var(--accent-primary-hover);
+}
+
+/* ── Value colors in code/locals ─────────────────────────────────────────── */
+.val-number  { color: var(--accent-orange); font-weight: 600; }
+.val-string  { color: var(--accent-green); font-weight: 600; }
+.val-boolean { color: var(--accent-blue); font-weight: 600; }
+.val-ref     { color: var(--accent-blue); cursor: pointer; text-decoration: underline; font-weight: 600; }
+.val-ref:hover { color: var(--accent-charcoal); }
+.val-null    { color: var(--text-muted); font-style: italic; }
+
+/* ── React Flow overrides ────────────────────────────────────────────────── */
+.react-flow__background { background: #ffffff !important; }
+.react-flow__edge-path { stroke: var(--accent-charcoal) !important; stroke-width: 1.5px; }
+.react-flow__arrowhead { fill: var(--accent-charcoal) !important; }
+.react-flow__controls {
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: #ffffff !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+.react-flow__controls-button:hover {
+  background: var(--bg-base) !important;
+  color: var(--text-primary) !important;
+}

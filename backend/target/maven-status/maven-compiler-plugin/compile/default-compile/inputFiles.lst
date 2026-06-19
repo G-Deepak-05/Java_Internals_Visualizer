@@ -1,0 +1,13 @@
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/JivApplication.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/config/CorsConfig.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/config/WebSocketConfig.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/controller/ExecutionController.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/ExecutionRequest.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/ExecutionResponse.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/GcEvent.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/HeapObject.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/JvmSnapshot.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/StackFrame.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/ThreadState.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/service/ExecutionService.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/service/SnapshotService.java

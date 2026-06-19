@@ -1,0 +1,13 @@
+com/jiv/JivApplication.class
+com/jiv/model/HeapObject.class
+com/jiv/model/JvmSnapshot.class
+com/jiv/service/ExecutionService.class
+com/jiv/model/ThreadState.class
+com/jiv/config/WebSocketConfig.class
+com/jiv/service/SnapshotService.class
+com/jiv/model/StackFrame.class
+com/jiv/model/ExecutionResponse.class
+com/jiv/controller/ExecutionController.class
+com/jiv/config/CorsConfig.class
+com/jiv/model/GcEvent.class
+com/jiv/model/ExecutionRequest.class
