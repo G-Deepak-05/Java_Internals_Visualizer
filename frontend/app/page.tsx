@@ -72,7 +72,7 @@ export default function LandingPage() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <a href="https://github.com" target="_blank"
+            <a href="https://github.com/G-Deepak-05/Java_Internals_Visualizer" target="_blank"
               className="btn btn-ghost text-xs">GitHub</a>
             <Link href="/visualizer" className="btn btn-primary text-xs">
               Launch IDE
