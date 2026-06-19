@@ -13,6 +13,7 @@ export interface HeapObject {
   refCount: number;
   sizeBytes: number;
   inStringPool: boolean;
+  age: number;
 }
 
 export type FieldValue = string | number | boolean | null | undefined;
@@ -42,6 +43,8 @@ export interface ThreadState {
   stackDepth: number;
   priority: number;
   daemon: boolean;
+  deadlocked?: boolean;
+  parentThreadName?: string;
 }
 
 export type ThreadStatus =
@@ -82,6 +85,7 @@ export interface JvmSnapshot {
   stdout?: string;
   jitCompilerName?: string;
   totalJitTimeMs?: number;
+  springBeans?: SpringBean[];
 }
 
 export type JvmEventType =
@@ -96,6 +100,12 @@ export type JvmEventType =
   | 'THREAD_END'
   | 'EXECUTION_COMPLETE'
   | 'ERROR';
+
+export interface SpringBean {
+  name: string;
+  className: string;
+  dependencies: string[];
+}
 
 export interface ExecutionRequest {
   code: string;
@@ -119,7 +129,9 @@ export type PanelId =
   | 'stringpool'
   | 'metaspace'
   | 'gc'
-  | 'console';
+  | 'console'
+  | 'spring'
+  | 'ai';
 
 export interface PanelVisibility {
   stack: boolean;
@@ -130,13 +142,15 @@ export interface PanelVisibility {
   metaspace: boolean;
   gc: boolean;
   console: boolean;
+  spring: boolean;
+  ai: boolean;
 }
 
 export interface PresetProgram {
   id: string;
   title: string;
   description: string;
-  category: 'Recursion' | 'OOP' | 'Collections' | 'Concurrency' | 'Strings' | 'GC';
+  category: 'Recursion' | 'OOP' | 'Collections' | 'Concurrency' | 'Strings' | 'GC' | 'Spring';
   code: string;
   mainClass: string;
 }

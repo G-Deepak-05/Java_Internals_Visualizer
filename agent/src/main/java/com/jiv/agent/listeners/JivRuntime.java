@@ -28,6 +28,13 @@ public class JivRuntime {
 
     private static final Set<String> loadedClasses = ConcurrentHashMap.newKeySet();
 
+    private static final Map<String, List<String>> registeredSpringBeans =
+        new ConcurrentHashMap<>();
+
+    public static void registerSpringBean(String className, List<String> dependencies) {
+        registeredSpringBeans.put(className, dependencies);
+    }
+
     private static final int THROTTLE = 1;
 
     private static final StringBuilder stdoutBuffer = new StringBuilder();
@@ -155,6 +162,8 @@ public class JivRuntime {
 
         snapshot.heap = new LinkedHashMap<>(heapRegistry);
 
+        snapshot.springBeans = collectSpringBeans();
+
         CompilationMXBean compBean = ManagementFactory.getCompilationMXBean();
         if (compBean != null) {
             snapshot.jitCompilerName = compBean.getName();
@@ -170,6 +179,14 @@ public class JivRuntime {
         long[] ids = mxBean.getAllThreadIds();
         ThreadInfo[] infos = mxBean.getThreadInfo(ids, true, true);
 
+        long[] deadlockedIds = mxBean.findDeadlockedThreads();
+        Set<Long> deadlockedSet = new HashSet<>();
+        if (deadlockedIds != null) {
+            for (long id : deadlockedIds) {
+                deadlockedSet.add(id);
+            }
+        }
+
         for (ThreadInfo info : infos) {
             if (info == null) continue;
             SnapshotData.ThreadData td = new SnapshotData.ThreadData();
@@ -177,6 +194,7 @@ public class JivRuntime {
             td.id = info.getThreadId();
             td.state = info.getThreadState().name();
             td.stackDepth = info.getStackTrace().length;
+            td.deadlocked = deadlockedSet.contains(info.getThreadId());
 
             if (info.getLockInfo() != null) {
                 td.waitingForMonitor = "obj_" + info.getLockInfo().getIdentityHashCode();
@@ -197,6 +215,7 @@ public class JivRuntime {
                 td.virtual = t.isVirtual();
                 td.daemon = t.isDaemon();
                 td.priority = t.getPriority();
+                td.parentThreadName = getParentThreadName(t);
                 if (t.isVirtual()) {
                     td.carrierThread = getCarrierThreadName(t);
                 }
@@ -215,27 +234,37 @@ public class JivRuntime {
     }
 
     private static long lastGcCount = 0;
-    private static final List<SnapshotData.GcEventData> pendingGcEvents = new ArrayList<>();
+    private static boolean gcOccurredThisStep = false;
 
     private static List<SnapshotData.GcEventData> collectGcEvents(int step) {
         List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
         List<SnapshotData.GcEventData> events = new ArrayList<>();
-
+        gcOccurredThisStep = false;
+        long totalGcCount = 0;
         for (GarbageCollectorMXBean gcBean : gcBeans) {
-            long currentCount = gcBean.getCollectionCount();
-            if (currentCount > lastGcCount) {
-                SnapshotData.GcEventData event = new SnapshotData.GcEventData();
-                event.type = gcBean.getName().contains("Young") ? "MINOR_GC" : "MAJOR_GC";
-                event.phase = "SWEEP";
-                event.durationMs = gcBean.getCollectionTime();
-
-                MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-                event.heapAfterBytes = memBean.getHeapMemoryUsage().getUsed();
-                events.add(event);
-                lastGcCount = currentCount;
+            long count = gcBean.getCollectionCount();
+            if (count > 0) {
+                totalGcCount += count;
             }
         }
-
+        if (lastGcCount == 0) {
+            lastGcCount = totalGcCount;
+        } else if (totalGcCount > lastGcCount) {
+            gcOccurredThisStep = true;
+            lastGcCount = totalGcCount;
+            for (GarbageCollectorMXBean gcBean : gcBeans) {
+                long currentCount = gcBean.getCollectionCount();
+                if (currentCount > 0) {
+                    SnapshotData.GcEventData event = new SnapshotData.GcEventData();
+                    event.type = gcBean.getName().toLowerCase().contains("young") || gcBean.getName().toLowerCase().contains("scavenge") ? "MINOR_GC" : "MAJOR_GC";
+                    event.phase = "SWEEP";
+                    event.durationMs = gcBean.getCollectionTime();
+                    MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+                    event.heapAfterBytes = memBean.getHeapMemoryUsage().getUsed();
+                    events.add(event);
+                }
+            }
+        }
         return events;
     }
 
@@ -316,8 +345,8 @@ public class JivRuntime {
             if (cls.isArray() || cls.isPrimitive()) return;
 
             for (Field field : cls.getDeclaredFields()) {
-                field.setAccessible(true);
                 try {
+                    field.setAccessible(true);
                     Object value = field.get(obj);
                     if (value == null) {
                         data.fields.put(field.getName(), null);
@@ -403,6 +432,21 @@ public class JivRuntime {
                 }
             }
         }
+
+        if (gcOccurredThisStep) {
+            for (SnapshotData.HeapObjectData data : heapRegistry.values()) {
+                if (data.reachable) {
+                    data.age++;
+                    if (data.age < 2) {
+                        data.generation = "YOUNG";
+                    } else if (data.age < 4) {
+                        data.generation = "SURVIVOR";
+                    } else {
+                        data.generation = "OLD";
+                    }
+                }
+            }
+        }
     }
 
     private static List<Object> getReferencedObjects(Object obj) {
@@ -424,8 +468,8 @@ public class JivRuntime {
                 for (Field field : cls.getDeclaredFields()) {
                     if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) continue;
                     if (field.getType().isPrimitive()) continue;
-                    field.setAccessible(true);
                     try {
+                        field.setAccessible(true);
                         Object val = field.get(obj);
                         if (val != null) refs.add(val);
                     } catch (Exception ignored) {}
@@ -457,5 +501,36 @@ public class JivRuntime {
             } catch (Exception ignored) {}
         }
         return null;
+    }
+
+    private static String getParentThreadName(Thread thread) {
+        try {
+            Field containerField = Thread.class.getDeclaredField("container");
+            containerField.setAccessible(true);
+            Object container = containerField.get(thread);
+            if (container != null) {
+                java.lang.reflect.Method ownerMethod = container.getClass().getDeclaredMethod("owner");
+                ownerMethod.setAccessible(true);
+                Thread owner = (Thread) ownerMethod.invoke(container);
+                if (owner != null) {
+                    return owner.getName();
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private static List<SnapshotData.SpringBeanData> collectSpringBeans() {
+        List<SnapshotData.SpringBeanData> beans = new ArrayList<>();
+        for (Map.Entry<String, List<String>> entry : registeredSpringBeans.entrySet()) {
+            String className = entry.getKey();
+            SnapshotData.SpringBeanData bean = new SnapshotData.SpringBeanData();
+            bean.className = className;
+            String simpleName = className.substring(className.lastIndexOf('.') + 1);
+            bean.name = Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
+            bean.dependencies = new ArrayList<>(entry.getValue());
+            beans.add(bean);
+        }
+        return beans;
     }
 }

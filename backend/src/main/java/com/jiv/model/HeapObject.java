@@ -30,6 +30,8 @@ public class HeapObject {
 
     private int refCount;
 
+    private int age;
+
     private long sizeBytes;
 
     private boolean inStringPool;

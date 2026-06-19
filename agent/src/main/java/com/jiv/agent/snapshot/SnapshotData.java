@@ -23,6 +23,14 @@ public class SnapshotData {
 
     public List<GcEventData> gcEvents = new ArrayList<>();
 
+    public List<SpringBeanData> springBeans = new ArrayList<>();
+
+    public static class SpringBeanData {
+        public String name;
+        public String className;
+        public List<String> dependencies = new ArrayList<>();
+    }
+
     public List<String> stringPool = new ArrayList<>();
 
     public List<String> loadedClasses = new ArrayList<>();
@@ -42,6 +50,7 @@ public class SnapshotData {
         public String generation = "YOUNG";
         public boolean reachable = true;
         public int refCount;
+        public int age;
         public long sizeBytes;
         public boolean inStringPool;
     }
@@ -68,6 +77,8 @@ public class SnapshotData {
         public String waitingForMonitor;
         public String ownsMonitor;
         public int stackDepth;
+        public boolean deadlocked;
+        public String parentThreadName;
         public int priority;
         public boolean daemon;
     }

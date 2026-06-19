@@ -8,6 +8,7 @@ import { PRESET_PROGRAMS } from '@/lib/presets';
 import {
   Play, Square, Code2, Layers, MemoryStick, Activity,
   FileCode, Type, Package, ChevronDown, RotateCcw, Terminal, Zap,
+  Leaf, Sparkles,
 } from 'lucide-react';
 import type { PanelVisibility } from '@/types/jvm';
 
@@ -26,9 +27,11 @@ const PANEL_BUTTONS: Array<{ id: keyof PanelVisibility; icon: React.ElementType;
   { id: 'stack',      icon: Layers,      label: 'Stack',      color: '#111111' },
   { id: 'heap',       icon: MemoryStick, label: 'Heap',       color: '#ca8a04' },
   { id: 'threads',    icon: Activity,    label: 'Threads',    color: '#dc2626' },
+  { id: 'spring',     icon: Leaf,        label: 'Spring DI',  color: '#16a34a' },
   { id: 'bytecode',   icon: Code2,       label: 'Bytecode',   color: '#2563eb' },
-  { id: 'stringpool', icon: Type,        label: 'Strings',    color: '#16a34a' },
+  { id: 'stringpool', icon: Type,        label: 'Strings',    color: '#0d9488' },
   { id: 'metaspace',  icon: Package,     label: 'Metaspace',  color: '#ea580c' },
+  { id: 'ai',         icon: Sparkles,    label: 'AI Coach',   color: '#7c3aed' },
   { id: 'console',    icon: Terminal,    label: 'Console',    color: '#71717a' },
 ];
 
@@ -99,7 +102,7 @@ export function Toolbar({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -4, scale: 0.97 }}
                   transition={{ duration: 0.15 }}>
-                  {(['Recursion', 'OOP', 'Collections', 'Strings', 'GC'] as const).map((cat) => {
+                  {(['Recursion', 'OOP', 'Collections', 'Strings', 'Concurrency', 'Spring', 'GC'] as const).map((cat) => {
                     const items = PRESET_PROGRAMS.filter((p) => p.category === cat);
                     if (!items.length) return null;
                     return (
