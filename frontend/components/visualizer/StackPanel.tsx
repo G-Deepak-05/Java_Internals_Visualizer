@@ -51,7 +51,7 @@ function FrameCard({ frame, depth }: { frame: StackFrame; depth: number }) {
         borderColor: frame.active ? 'var(--border-bright)' : 'var(--border)',
       }}
     >
-      {/* Frame Header */}
+      {}
       <div className="stack-frame-header flex items-center justify-between"
         style={{ background: frame.active ? '#ffffff' : '#fafaf9' }}>
         <div className="flex items-center gap-2 min-w-0">
@@ -78,7 +78,7 @@ function FrameCard({ frame, depth }: { frame: StackFrame; depth: number }) {
         </div>
       </div>
 
-      {/* Locals Cards */}
+      {}
       {hasLocals && (
         <div className="stack-frame-body p-2 border-t border-[var(--border)] bg-white">
           <div className="grid grid-cols-2 gap-1.5 font-mono text-[10px]">
@@ -92,7 +92,7 @@ function FrameCard({ frame, depth }: { frame: StackFrame; depth: number }) {
         </div>
       )}
 
-      {/* Return Value */}
+      {}
       {frame.returnValue !== undefined && frame.returnValue !== null && (
         <div className="stack-frame-body border-t border-[var(--border)] bg-[#f0fdf4] p-2 flex items-center justify-between">
           <span className="text-[#16a34a] font-bold text-[10px] uppercase tracking-wider font-mono">return →</span>
@@ -112,7 +112,7 @@ export function StackPanel() {
 
   return (
     <div className="panel flex flex-col overflow-hidden h-full flex-1">
-      {/* Header */}
+      {}
       <div className="panel-header">
         <Layers size={13} style={{ color: 'var(--text-primary)' }} />
         <span className="panel-header-title">Call Stack</span>
@@ -123,12 +123,12 @@ export function StackPanel() {
         )}
       </div>
 
-      {/* Thread Selector */}
+      {}
       {snapshot && Object.keys(snapshot.stacks ?? {}).length > 1 && (
         <ThreadSelector threads={Object.keys(snapshot.stacks)} />
       )}
 
-      {/* Stack Direction Label */}
+      {}
       {!isEmpty && (
         <div className="px-3 py-1.5 flex items-center gap-1 flex-shrink-0"
           style={{ borderBottom: '1px solid var(--border)', background: '#fafaf9' }}>
@@ -138,7 +138,7 @@ export function StackPanel() {
         </div>
       )}
 
-      {/* Frames */}
+      {}
       <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-white">
         {isEmpty ? (
           <EmptyState />

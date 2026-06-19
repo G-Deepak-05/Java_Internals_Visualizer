@@ -31,10 +31,9 @@ export function VisualizerLayout() {
   const [code, setCode] = useState<string>(PRESET_PROGRAMS[0].code);
   const [mainClass, setMainClass] = useState<string>('Main');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editorWidth, setEditorWidth] = useState(38); // percent
+  const [editorWidth, setEditorWidth] = useState(38); 
   const isDragging = useRef(false);
 
-  // Load preset from URL param
   useEffect(() => {
     if (presetId) {
       const preset = PRESET_PROGRAMS.find((p) => p.id === presetId);
@@ -46,7 +45,6 @@ export function VisualizerLayout() {
     }
   }, [presetId, setSelectedPreset]);
 
-  // WebSocket subscription
   useWebSocket(sessionId);
 
   const handleRun = async () => {
@@ -79,7 +77,6 @@ export function VisualizerLayout() {
     }
   };
 
-  // Splitter drag
   const handleSplitterMouseDown = () => {
     isDragging.current = true;
     const onMove = (e: MouseEvent) => {
@@ -96,7 +93,6 @@ export function VisualizerLayout() {
     window.addEventListener('mouseup', onUp);
   };
 
-  // Dynamic grid column template based on panel visibility
   const cols = [];
   if (panels.stack) cols.push('1.1fr');
   if (panels.heap) cols.push('1.3fr');
@@ -105,7 +101,7 @@ export function VisualizerLayout() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[var(--bg-base)]">
-      {/* ── Toolbar ─────────────────────────────────────────────── */}
+      {}
       <Toolbar
         onRun={handleRun}
         onStop={handleStop}
@@ -117,9 +113,9 @@ export function VisualizerLayout() {
         onMainClassChange={setMainClass}
       />
 
-      {/* ── Main Layout ──────────────────────────────────────────── */}
+      {}
       <div className="flex flex-1 overflow-hidden">
-        {/* ── Editor Column ─────────────────────────────────────── */}
+        {}
         <div style={{ width: `${editorWidth}%`, minWidth: 240 }}
           className="flex flex-col overflow-hidden border-r border-[var(--border)]">
           <CodeEditor
@@ -130,12 +126,12 @@ export function VisualizerLayout() {
           />
         </div>
 
-        {/* ── Splitter ──────────────────────────────────────────── */}
+        {}
         <div className="splitter" onMouseDown={handleSplitterMouseDown} />
 
-        {/* ── Visualization Column ──────────────────────────────── */}
+        {}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Error Banner */}
+          {}
           {executionError && (
             <div className="px-4 py-2 text-xs font-mono flex items-center gap-2 flex-shrink-0"
               style={{ background: '#ff4d6d14', borderBottom: '1px solid #ff4d6d33', color: '#ff4d6d' }}>
@@ -144,27 +140,27 @@ export function VisualizerLayout() {
             </div>
           )}
 
-          {/* Panels Grid */}
+          {}
           <div className="flex-1 overflow-hidden p-3 grid gap-3"
             style={{
               gridTemplateColumns,
               gridTemplateRows: 'auto',
             }}>
 
-            {/* Stack Panel */}
+            {}
             {panels.stack && <StackPanel />}
 
-            {/* Heap Panel */}
+            {}
             {panels.heap && <HeapPanel />}
 
-            {/* Console Panel */}
+            {}
             {panels.console && <ConsolePanel />}
 
-            {/* GC Overlay (floats over heap) */}
+            {}
             <GCOverlay />
           </div>
 
-          {/* Secondary Panels Row */}
+          {}
           {(panels.threads || panels.bytecode || panels.stringpool || panels.metaspace) && (
             <div className="flex gap-3 px-3 pb-3 overflow-x-auto flex-shrink-0"
               style={{ height: 200, minHeight: 200 }}>
@@ -175,7 +171,7 @@ export function VisualizerLayout() {
             </div>
           )}
 
-          {/* ── Time Travel ──────────────────────────────────────── */}
+          {}
           <TimeTravelControls />
         </div>
       </div>

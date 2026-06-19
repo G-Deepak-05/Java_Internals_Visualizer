@@ -3,11 +3,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useJvmStore } from '@/store/jvmStore';
 
-/**
- * GC Overlay — renders on top of the heap panel.
- * When a GC event fires, shows animated overlay text and highlights
- * objects that were collected (flash red then fade).
- */
 export function GCOverlay() {
   const { currentSnapshot } = useJvmStore();
   const snapshot = currentSnapshot();
@@ -25,13 +20,13 @@ export function GCOverlay() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Subtle red vignette */}
+          {}
           <div className="absolute inset-0"
             style={{
               background: 'radial-gradient(ellipse at center, transparent 40%, rgba(255,77,109,0.08) 100%)',
             }} />
 
-          {/* GC Event Badge */}
+          {}
           <motion.div
             className="relative px-5 py-3 rounded-xl flex items-center gap-3"
             style={{

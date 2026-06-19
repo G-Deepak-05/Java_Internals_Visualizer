@@ -22,7 +22,6 @@ export function TimeTravelControls() {
   const total = snapshots.length;
   const pct = total > 1 ? (currentStep / (total - 1)) * 100 : 0;
 
-  // Playback interval
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -51,7 +50,7 @@ export function TimeTravelControls() {
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
     >
-      {/* Scrubber */}
+      {}
       <div className="px-4 pt-2.5">
         <div className="relative h-4 flex items-center group cursor-pointer"
           onClick={(e) => {
@@ -60,9 +59,9 @@ export function TimeTravelControls() {
             const ratio = x / rect.width;
             setCurrentStep(Math.round(ratio * (total - 1)));
           }}>
-          {/* Track */}
+          {}
           <div className="w-full h-1 rounded-full" style={{ background: '#e2e2dd' }}>
-            {/* Fill */}
+            {}
             <div className="h-full rounded-full transition-all duration-100"
               style={{
                 width: `${pct}%`,
@@ -70,7 +69,7 @@ export function TimeTravelControls() {
               }} />
           </div>
 
-          {/* Thumb */}
+          {}
           <div className="absolute h-3.5 w-3.5 rounded-full border border-black shadow transition-all"
             style={{
               left: `calc(${pct}% - 7px)`,
@@ -79,15 +78,15 @@ export function TimeTravelControls() {
         </div>
       </div>
 
-      {/* Controls Row */}
+      {}
       <div className="px-4 py-2.5 flex items-center gap-3">
-        {/* Step Counter */}
+        {}
         <div className="font-mono text-xs text-[var(--text-secondary)] w-28 flex-shrink-0">
           Step <span className="text-[var(--text-primary)] font-bold">{currentStep + 1}</span>
           {' / '}{total}
         </div>
 
-        {/* Navigation */}
+        {}
         <div className="flex items-center gap-1 mx-auto">
           <button className="btn-icon text-black" onClick={() => setCurrentStep(0)} title="First step">
             <ChevronFirst size={14} />
@@ -116,7 +115,7 @@ export function TimeTravelControls() {
           </button>
         </div>
 
-        {/* Speed Control */}
+        {}
         <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
           <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wide">Speed</span>
           <div className="flex items-center gap-0.5">
@@ -135,14 +134,14 @@ export function TimeTravelControls() {
           </div>
         </div>
 
-        {/* Current event type */}
+        {}
         {snapshot?.eventType && (
           <div className="text-[10px] font-mono px-2 py-0.5 rounded flex-shrink-0 bg-[#fafaf9] border border-[var(--border)] text-[var(--text-secondary)]">
             {snapshot.eventType}
           </div>
         )}
 
-        {/* Completion badge */}
+        {}
         <AnimatePresence>
           {executionComplete && (
             <motion.div

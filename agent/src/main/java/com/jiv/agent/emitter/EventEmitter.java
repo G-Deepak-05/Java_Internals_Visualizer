@@ -7,13 +7,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-/**
- * Singleton emitter that writes JvmSnapshot JSON to stdout.
- * Each line on stdout is a complete, valid JSON object representing one JVM state snapshot.
- * The backend ExecutionService reads these lines and parses them.
- *
- * Uses a blocking queue + dedicated writer thread to avoid blocking the instrumented threads.
- */
 public class EventEmitter {
 
     private static final EventEmitter INSTANCE = new EventEmitter();
@@ -24,10 +17,9 @@ public class EventEmitter {
     private volatile boolean running = true;
 
     private EventEmitter() {
-        // Reserve System.out for our JSON output exclusively
+
         this.out = System.out;
 
-        // Redirect System.out for user code so it doesn't corrupt our JSON stream
         System.setOut(new PrintStream(new OutputStream() {
             @Override public void write(int b) throws IOException {
                 com.jiv.agent.listeners.JivRuntime.appendStdoutChar((char) b);
@@ -39,7 +31,6 @@ public class EventEmitter {
             }
         }));
 
-        // Dedicated writer thread — drains the queue and writes JSON lines
         this.writerThread = new Thread(() -> {
             while (running || !queue.isEmpty()) {
                 try {
@@ -61,9 +52,6 @@ public class EventEmitter {
         return INSTANCE;
     }
 
-    /**
-     * Emits a snapshot — queues it for async JSON serialization and writing.
-     */
     public void emit(SnapshotData snapshot) {
         try {
             String json = gson.toJson(snapshot);
@@ -73,9 +61,6 @@ public class EventEmitter {
         }
     }
 
-    /**
-     * Flushes all pending events to stdout. Called on shutdown.
-     */
     public void flush() {
         running = false;
         try {

@@ -13,8 +13,6 @@ import { useJvmStore } from '@/store/jvmStore';
 import type { HeapObject } from '@/types/jvm';
 import { MemoryStick } from 'lucide-react';
 
-// ── Custom Heap Object Node ───────────────────────────────────────────────
-
 function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover: (id: string|null) => void } }) {
   const {
     id, className, fields = {}, isArray, arrayElements,
@@ -54,11 +52,11 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
       onMouseEnter={() => onHover(id)}
       onMouseLeave={() => onHover(null)}
     >
-      {/* Input handle for incoming references */}
+      {}
       <Handle type="target" position={Position.Left}
         style={{ background: 'var(--accent-charcoal)', border: 'none', width: 6, height: 6 }} />
 
-      {/* Header */}
+      {}
       <div className="heap-node-header flex flex-col gap-1 select-none">
         <div className="flex items-center justify-between">
           <span className="font-bold text-[11px] text-[var(--text-primary)]">{className}</span>
@@ -80,7 +78,7 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
         </div>
       </div>
 
-      {/* String value */}
+      {}
       {isString && stringValue !== undefined && (
         <div className="heap-node-field">
           <span className="text-[var(--text-secondary)]">value</span>
@@ -88,7 +86,7 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
         </div>
       )}
 
-      {/* Array elements */}
+      {}
       {isArray && arrayElements && (
         <div className="heap-node-field flex-wrap gap-1">
           {(arrayElements as unknown[]).slice(0, 8).map((el, i) => (
@@ -100,7 +98,7 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
         </div>
       )}
 
-      {/* Fields */}
+      {}
       {!isString && !isArray && Object.entries(fields).slice(0, 8).map(([k, v]) => (
         <div key={k} className="heap-node-field">
           <span className="text-[var(--text-secondary)] truncate mr-2">{k}</span>
@@ -115,7 +113,7 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
         </div>
       ))}
 
-      {/* Output handle for outgoing references */}
+      {}
       <Handle type="source" position={Position.Right}
         style={{ background: 'var(--accent-charcoal)', border: 'none', width: 6, height: 6 }} />
     </div>
@@ -124,14 +122,11 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
 
 const nodeTypes = { heapObject: HeapNode };
 
-// ── HeapCanvas ────────────────────────────────────────────────────────────────
-
 function HeapCanvas() {
   const { currentSnapshot, highlightedObjectId, setHighlightedObjectId } = useJvmStore();
   const snapshot = currentSnapshot();
   const heap = snapshot?.heap ?? {};
 
-  // Build nodes and edges from heap state
   const { nodes, edges } = useMemo(() => {
     const objs = Object.values(heap);
     const nodes: Node[] = [];
@@ -154,7 +149,6 @@ function HeapCanvas() {
         },
       });
 
-      // Create edges for reference fields
       Object.entries(obj.fields ?? {}).forEach(([fieldName, value]) => {
         if (typeof value === 'string' && value.startsWith('obj_') && heap[value]) {
           edges.push({

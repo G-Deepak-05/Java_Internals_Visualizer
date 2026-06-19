@@ -1,7 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// JIV TypeScript Types
-// Mirrors the Java model classes in backend/src/main/java/com/jiv/model/
-// ─────────────────────────────────────────────────────────────────────────────
 
 export interface HeapObject {
   id: string;
@@ -99,8 +95,6 @@ export type JvmEventType =
   | 'EXECUTION_COMPLETE'
   | 'ERROR';
 
-// ─── Execution API ───────────────────────────────────────────────────────────
-
 export interface ExecutionRequest {
   code: string;
   mainClass?: string;
@@ -114,8 +108,6 @@ export interface ExecutionResponse {
   errorMessage?: string;
   totalSnapshots?: number;
 }
-
-// ─── UI State ────────────────────────────────────────────────────────────────
 
 export type PanelId =
   | 'stack'
@@ -137,8 +129,6 @@ export interface PanelVisibility {
   gc: boolean;
   console: boolean;
 }
-
-// ─── Preset Programs ─────────────────────────────────────────────────────────
 
 export interface PresetProgram {
   id: string;

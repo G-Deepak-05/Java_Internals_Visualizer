@@ -11,11 +11,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * Stores and retrieves JVM snapshots for time-travel debugging.
- * Uses Redis as a fast, sorted list per session.
- * Each session key: "jiv:snapshots:{sessionId}" -> List of JSON strings
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -27,9 +22,6 @@ public class SnapshotService {
     private static final String KEY_PREFIX = "jiv:snapshots:";
     private static final long EXPIRY_HOURS = 2;
 
-    /**
-     * Stores a snapshot in Redis under the session's list.
-     */
     public void store(String sessionId, JvmSnapshot snapshot) {
         try {
             String key = KEY_PREFIX + sessionId;
@@ -41,9 +33,6 @@ public class SnapshotService {
         }
     }
 
-    /**
-     * Retrieves all snapshots for a session, ordered by step index.
-     */
     public List<JvmSnapshot> getAll(String sessionId) {
         try {
             String key = KEY_PREFIX + sessionId;
@@ -66,9 +55,6 @@ public class SnapshotService {
         }
     }
 
-    /**
-     * Retrieves a specific snapshot by step index.
-     */
     public Optional<JvmSnapshot> getByStep(String sessionId, int stepIndex) {
         try {
             String key = KEY_PREFIX + sessionId;
@@ -80,9 +66,6 @@ public class SnapshotService {
         }
     }
 
-    /**
-     * Returns total number of snapshots for a session.
-     */
     public int count(String sessionId) {
         try {
             Long size = redisTemplate.opsForList().size(KEY_PREFIX + sessionId);
@@ -92,9 +75,6 @@ public class SnapshotService {
         }
     }
 
-    /**
-     * Deletes all snapshots for a session.
-     */
     public void clear(String sessionId) {
         redisTemplate.delete(KEY_PREFIX + sessionId);
     }

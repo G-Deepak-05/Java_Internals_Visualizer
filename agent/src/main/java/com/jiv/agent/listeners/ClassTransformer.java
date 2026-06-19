@@ -11,22 +11,11 @@ import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.*;
 
-/**
- * ASM-based ClassFileTransformer using Tree API.
- *
- * For every class loaded in the user program (excluding JDK internals and the agent itself),
- * this transformer injects calls to:
- * - JivRuntime.onMethodEnter() at entry
- * - JivRuntime.onMethodExit() before exit (returns and throws)
- * - JivRuntime.setLocal() for all in-scope local variables at each LineNumberNode
- * - JivRuntime.onLineChange() at each LineNumberNode
- */
 public class ClassTransformer implements ClassFileTransformer {
 
     private final EventEmitter emitter;
     private final Instrumentation inst;
 
-    // Classes to skip — don't instrument these
     private static final Set<String> EXCLUDED_PREFIXES = Set.of(
         "java/", "javax/", "jdk/", "sun/", "com/sun/",
         "org/objectweb/asm/", "com/google/gson/",
@@ -46,7 +35,7 @@ public class ClassTransformer implements ClassFileTransformer {
                             byte[] classfileBuffer) {
 
         if (className == null || shouldExclude(className)) {
-            return null; // no transformation
+            return null; 
         }
 
         try {
@@ -56,11 +45,11 @@ public class ClassTransformer implements ClassFileTransformer {
 
             String dottedClassName = className.replace('/', '.');
             for (MethodNode mn : cn.methods) {
-                // Skip abstract, native, synthetic, bridge methods
+
                 if ((mn.access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE)) != 0) {
                     continue;
                 }
-                // Skip class initializers <clinit>
+
                 if (mn.name.equals("<clinit>")) {
                     continue;
                 }
@@ -88,7 +77,6 @@ public class ClassTransformer implements ClassFileTransformer {
         AbstractInsnNode[] insns = mn.instructions.toArray();
         int currentLine = 0;
 
-        // 1. Find the initial line number of the method (if any)
         for (AbstractInsnNode insn : insns) {
             if (insn instanceof LineNumberNode lnn) {
                 currentLine = lnn.line;
@@ -96,7 +84,6 @@ public class ClassTransformer implements ClassFileTransformer {
             }
         }
 
-        // 2. Inject Method Enter at the very beginning of the method
         AbstractInsnNode insertEnterPoint = mn.instructions.getFirst();
         if (mn.name.equals("<init>")) {
             for (AbstractInsnNode insn : insns) {
@@ -123,7 +110,6 @@ public class ClassTransformer implements ClassFileTransformer {
             mn.instructions.insertBefore(insertEnterPoint, enterList);
         }
 
-        // 3. Process all instructions for Line Changes and Method Exits
         int superCallIdx = -1;
         if (mn.name.equals("<init>")) {
             for (int k = 0; k < insns.length; k++) {
@@ -141,7 +127,6 @@ public class ClassTransformer implements ClassFileTransformer {
             if (insn instanceof LineNumberNode lnn) {
                 currentLine = lnn.line;
 
-                // Create instructions to capture all in-scope local variables
                 InsnList captureList = new InsnList();
                 if (mn.localVariables != null) {
                     int insnIdx = mn.instructions.indexOf(lnn);
@@ -155,7 +140,7 @@ public class ClassTransformer implements ClassFileTransformer {
                             if (mn.name.equals("<init>") && insnIdx <= superCallIdx) {
                                 continue;
                             }
-                            // Load name, value, then setLocal
+
                             captureList.add(new LdcInsnNode(var.name));
                             addLoadAndBox(captureList, var);
                             captureList.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
@@ -167,7 +152,6 @@ public class ClassTransformer implements ClassFileTransformer {
                     }
                 }
 
-                // Add call to JivRuntime.onLineChange(className, methodName, line)
                 captureList.add(new LdcInsnNode(className));
                 captureList.add(new LdcInsnNode(mn.name));
                 captureList.add(new IntInsnNode(Opcodes.SIPUSH, lnn.line));
@@ -177,11 +161,10 @@ public class ClassTransformer implements ClassFileTransformer {
                     "(Ljava/lang/String;Ljava/lang/String;I)V",
                     false));
 
-                // Insert BEFORE the LineNumberNode so the line state updates first
                 mn.instructions.insertBefore(lnn, captureList);
 
             } else if (isExitInstruction(insn)) {
-                // Inject Method Exit before return/throw
+
                 InsnList exitList = new InsnList();
                 exitList.add(new LdcInsnNode(className));
                 exitList.add(new LdcInsnNode(mn.name));

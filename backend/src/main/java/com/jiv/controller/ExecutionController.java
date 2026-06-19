@@ -13,9 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * REST API for code execution and snapshot retrieval.
- */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -25,12 +22,6 @@ public class ExecutionController {
     private final ExecutionService executionService;
     private final SnapshotService snapshotService;
 
-    /**
-     * POST /api/execute
-     * Submits Java code for sandboxed execution.
-     * Returns immediately with a sessionId.
-     * Frontend subscribes to /topic/jvm/{sessionId} for live updates.
-     */
     @PostMapping("/execute")
     public ResponseEntity<ExecutionResponse> execute(@RequestBody ExecutionRequest request) {
         if (request.getCode() == null || request.getCode().isBlank()) {
@@ -41,16 +32,11 @@ public class ExecutionController {
         String sessionId = UUID.randomUUID().toString();
         log.info("New execution request: sessionId={}", sessionId);
 
-        // Fire-and-forget async execution
         executionService.executeAsync(sessionId, request);
 
         return ResponseEntity.ok(ExecutionResponse.queued(sessionId));
     }
 
-    /**
-     * POST /api/execute/{sessionId}/stop
-     * Stops a running execution session.
-     */
     @PostMapping("/execute/{sessionId}/stop")
     public ResponseEntity<Void> stop(@PathVariable String sessionId) {
         log.info("Stop execution request for sessionId={}", sessionId);
@@ -58,20 +44,12 @@ public class ExecutionController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * GET /api/snapshots/{sessionId}
-     * Returns all captured snapshots for time-travel debugging.
-     */
     @GetMapping("/snapshots/{sessionId}")
     public ResponseEntity<List<JvmSnapshot>> getSnapshots(@PathVariable String sessionId) {
         List<JvmSnapshot> snapshots = snapshotService.getAll(sessionId);
         return ResponseEntity.ok(snapshots);
     }
 
-    /**
-     * GET /api/snapshots/{sessionId}/{stepIndex}
-     * Returns a single snapshot by step index.
-     */
     @GetMapping("/snapshots/{sessionId}/{stepIndex}")
     public ResponseEntity<JvmSnapshot> getSnapshot(
             @PathVariable String sessionId,
@@ -81,10 +59,6 @@ public class ExecutionController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * GET /api/health
-     * Health check endpoint.
-     */
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("JIV Backend OK");

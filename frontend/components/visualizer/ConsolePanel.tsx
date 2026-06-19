@@ -10,7 +10,6 @@ export function ConsolePanel() {
   const stdout = snapshot?.stdout ?? '';
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when stdout updates
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -19,13 +18,13 @@ export function ConsolePanel() {
 
   return (
     <div className="panel flex flex-col overflow-hidden h-full flex-1 min-w-[200px]">
-      {/* Header */}
+      {}
       <div className="panel-header flex-shrink-0">
         <Terminal size={13} style={{ color: 'var(--accent-primary-hover)' }} />
         <span className="panel-header-title">Program Console</span>
       </div>
 
-      {/* Output Stream */}
+      {}
       <div
         ref={containerRef}
         className="flex-1 bg-[#ffffff] p-4 overflow-y-auto font-mono text-[11px] leading-relaxed text-[#111111] border-t border-[var(--border)] min-h-0"

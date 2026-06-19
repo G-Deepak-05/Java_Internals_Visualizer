@@ -19,7 +19,6 @@ export function CodeEditor({ code, onChange, language = 'java', readOnly = false
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
 
-    // Configure Monaco light theme
     monaco.editor.defineTheme('jiv-light', {
       base: 'vs',
       inherit: true,
@@ -49,14 +48,12 @@ export function CodeEditor({ code, onChange, language = 'java', readOnly = false
     monaco.editor.setTheme('jiv-light');
   };
 
-  // Highlight executing lines
   useEffect(() => {
     if (!editorRef.current || !snapshot) return;
 
     const editor = editorRef.current;
     const nextLine = snapshot.lineNumber;
 
-    // Line just executed (previous step's line number, if it's different from next line)
     const justExecutedLine =
       currentStep > 0 && snapshots[currentStep - 1]?.lineNumber !== nextLine
         ? snapshots[currentStep - 1]?.lineNumber
@@ -64,7 +61,6 @@ export function CodeEditor({ code, onChange, language = 'java', readOnly = false
 
     const decorationsList = [];
 
-    // 1. Add highlight for next line to execute
     if (nextLine && nextLine > 0) {
       decorationsList.push({
         range: { startLineNumber: nextLine, startColumn: 1, endLineNumber: nextLine, endColumn: 1 },
@@ -76,7 +72,6 @@ export function CodeEditor({ code, onChange, language = 'java', readOnly = false
       });
     }
 
-    // 2. Add highlight for line just executed
     if (justExecutedLine && justExecutedLine > 0) {
       decorationsList.push({
         range: { startLineNumber: justExecutedLine, startColumn: 1, endLineNumber: justExecutedLine, endColumn: 1 },
@@ -97,14 +92,14 @@ export function CodeEditor({ code, onChange, language = 'java', readOnly = false
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col" style={{ minHeight: 0 }}>
-      {/* Editor Header */}
+      {}
       <div className="panel-header flex-shrink-0 flex items-center justify-between"
         style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-2">
           <span className="text-xs text-[var(--text-primary)] font-mono font-bold">Main.java</span>
         </div>
 
-        {/* Highlight Legend */}
+        {}
         {snapshots.length > 0 && (
           <div className="flex items-center gap-4 text-[10px] font-mono select-none">
             <div className="flex items-center gap-1.5">

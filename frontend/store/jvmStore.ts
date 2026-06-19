@@ -6,31 +6,25 @@ import type {
   PresetProgram,
 } from '@/types/jvm';
 
-// ─── Store Shape ─────────────────────────────────────────────────────────────
-
 interface JvmStore {
-  // ── Session ──────────────────────────────────────────────────────────────
+
   sessionId: string | null;
   setSessionId: (id: string | null) => void;
 
-  // ── Snapshots ─────────────────────────────────────────────────────────────
   snapshots: JvmSnapshot[];
   addSnapshot: (snapshot: JvmSnapshot) => void;
   clearSnapshots: () => void;
 
-  // ── Time Travel ───────────────────────────────────────────────────────────
   currentStep: number;
   setCurrentStep: (step: number) => void;
   stepForward: () => void;
   stepBack: () => void;
 
-  // ── Playback ──────────────────────────────────────────────────────────────
   isPlaying: boolean;
-  playbackSpeed: number; // 0.25, 0.5, 1, 2, 4
+  playbackSpeed: number; 
   setIsPlaying: (playing: boolean) => void;
   setPlaybackSpeed: (speed: number) => void;
 
-  // ── Execution ─────────────────────────────────────────────────────────────
   isExecuting: boolean;
   executionComplete: boolean;
   executionError: string | null;
@@ -38,7 +32,6 @@ interface JvmStore {
   setExecutionComplete: (v: boolean) => void;
   setExecutionError: (err: string | null) => void;
 
-  // ── UI ─────────────────────────────────────────────────────────────────
   panels: PanelVisibility;
   togglePanel: (panel: keyof PanelVisibility) => void;
   activeThread: string;
@@ -48,28 +41,24 @@ interface JvmStore {
   selectedPreset: PresetProgram | null;
   setSelectedPreset: (preset: PresetProgram | null) => void;
 
-  // ── Derived / Current ─────────────────────────────────────────────────────
   currentSnapshot: () => JvmSnapshot | null;
 }
-
-// ─── Store Implementation ─────────────────────────────────────────────────────
 
 export const useJvmStore = create<JvmStore>()(
   devtools(
     (set, get) => ({
-      // ── Session ────────────────────────────────────────────────────────────
+
       sessionId: null,
       setSessionId: (id) => set({ sessionId: id }),
 
-      // ── Snapshots ──────────────────────────────────────────────────────────
       snapshots: [],
       addSnapshot: (snapshot) =>
         set((state) => ({
           snapshots: [...state.snapshots, snapshot],
-          // Auto-advance currentStep if we're at the end (live mode)
+
           currentStep:
             state.isPlaying || state.currentStep === state.snapshots.length - 1
-              ? state.snapshots.length  // will point to the new snapshot
+              ? state.snapshots.length  
               : state.currentStep,
         })),
       clearSnapshots: () =>
@@ -82,7 +71,6 @@ export const useJvmStore = create<JvmStore>()(
           executionError: null,
         }),
 
-      // ── Time Travel ────────────────────────────────────────────────────────
       currentStep: 0,
       setCurrentStep: (step) => {
         const { snapshots } = get();
@@ -102,13 +90,11 @@ export const useJvmStore = create<JvmStore>()(
         }
       },
 
-      // ── Playback ───────────────────────────────────────────────────────────
       isPlaying: false,
       playbackSpeed: 1,
       setIsPlaying: (playing) => set({ isPlaying: playing }),
       setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
 
-      // ── Execution ──────────────────────────────────────────────────────────
       isExecuting: false,
       executionComplete: false,
       executionError: null,
@@ -117,7 +103,6 @@ export const useJvmStore = create<JvmStore>()(
       setExecutionError: (err) =>
         set({ executionError: err, isExecuting: false }),
 
-      // ── UI ─────────────────────────────────────────────────────────────────
       panels: {
         stack: true,
         heap: true,
@@ -142,7 +127,6 @@ export const useJvmStore = create<JvmStore>()(
       selectedPreset: null,
       setSelectedPreset: (preset) => set({ selectedPreset: preset }),
 
-      // ── Derived ────────────────────────────────────────────────────────────
       currentSnapshot: () => {
         const { snapshots, currentStep } = get();
         if (snapshots.length === 0) return null;

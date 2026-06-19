@@ -57,7 +57,7 @@ export function Toolbar({
     <div className="bg-white flex-shrink-0 border-b border-[var(--border)]"
       style={{ height: 52 }}>
       <div className="h-full flex items-center px-4 gap-3">
-        {/* Logo */}
+        {}
         <Link href="/" className="flex items-center gap-2 flex-shrink-0 mr-2">
           <div className="w-6 h-6 rounded flex items-center justify-center bg-black">
             <Code2 size={12} color="white" strokeWidth={2.5} />
@@ -70,10 +70,10 @@ export function Toolbar({
           </span>
         </Link>
 
-        {/* Divider */}
+        {}
         <div className="w-px h-5 bg-[var(--border)] flex-shrink-0" />
 
-        {/* Presets Dropdown */}
+        {}
         <div className="relative">
           <button
             className="btn btn-ghost text-xs flex items-center gap-1.5"
@@ -124,7 +124,7 @@ export function Toolbar({
           </AnimatePresence>
         </div>
 
-        {/* Main Class Input */}
+        {}
         <input
           type="text"
           value={mainClassInput}
@@ -136,7 +136,7 @@ export function Toolbar({
           className="hidden md:block text-xs font-mono px-2.5 py-1.5 rounded border border-[var(--border)] w-28 bg-white text-black outline-none"
         />
 
-        {/* Panel Toggles */}
+        {}
         <div className="flex items-center gap-1 ml-1">
           {PANEL_BUTTONS.map(({ id, icon: Icon, label, color }) => (
             <button
@@ -150,24 +150,24 @@ export function Toolbar({
           ))}
         </div>
 
-        {/* Spacer */}
+        {}
         <div className="flex-1" />
 
-        {/* Snapshot Count */}
+        {}
         {snapshots.length > 0 && (
           <div className="text-xs text-[var(--text-secondary)] hidden sm:block font-mono">
             {snapshots.length} snapshots
           </div>
         )}
 
-        {/* Reset */}
+        {}
         {snapshots.length > 0 && (
           <button className="btn-icon" onClick={handleReset} title="Reset">
             <RotateCcw size={13} />
           </button>
         )}
 
-        {/* Stop Button */}
+        {}
         {isRunning && (
           <button
             id="stop-button"
@@ -182,7 +182,7 @@ export function Toolbar({
           </button>
         )}
 
-        {/* Run Button */}
+        {}
         <button
           id="run-button"
           onClick={onRun}

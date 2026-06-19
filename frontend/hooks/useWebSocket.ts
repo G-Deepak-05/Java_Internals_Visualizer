@@ -6,10 +6,6 @@ import type { JvmSnapshot } from '@/types/jvm';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8080/ws';
 
-/**
- * Custom hook that manages a STOMP WebSocket connection to the JIV backend.
- * Subscribes to /topic/jvm/{sessionId} and feeds snapshots into the Zustand store.
- */
 export function useWebSocket(sessionId: string | null) {
   const clientRef = useRef<Client | null>(null);
   const {
@@ -29,7 +25,6 @@ export function useWebSocket(sessionId: string | null) {
   useEffect(() => {
     if (!sessionId) return;
 
-    // Disconnect any existing connection
     disconnect();
 
     const client = new Client({

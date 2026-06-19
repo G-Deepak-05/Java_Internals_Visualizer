@@ -2,13 +2,6 @@ package com.jiv.agent.snapshot;
 
 import java.util.*;
 
-/**
- * Lightweight POJO representing a JVM state snapshot.
- * Serialized to JSON by the EventEmitter and parsed by the Spring Boot backend.
- *
- * This mirrors JvmSnapshot.java in the backend but is kept lean (no Spring/Lombok deps)
- * since the agent JAR must stay minimal and fast.
- */
 public class SnapshotData {
 
     public String sessionId;
@@ -20,31 +13,21 @@ public class SnapshotData {
     public long timestamp;
     public String stdout;
 
-    /** Heap objects: objectId -> HeapObjectData */
     public Map<String, HeapObjectData> heap = new LinkedHashMap<>();
 
-    /** Call stacks: threadName -> list of frames */
     public Map<String, List<FrameData>> stacks = new LinkedHashMap<>();
 
-    /** Thread states: threadName -> state string */
     public Map<String, ThreadData> threads = new LinkedHashMap<>();
 
-    /** GC events */
     public List<GcEventData> gcEvents = new ArrayList<>();
 
-    /** String pool */
     public List<String> stringPool = new ArrayList<>();
 
-    /** Loaded class names */
     public List<String> loadedClasses = new ArrayList<>();
 
-    /** Bytecode for current method */
     public List<String> methodBytecode = new ArrayList<>();
 
-    /** Currently executing bytecode instruction */
     public String currentBytecode;
-
-    // ── Nested POJOs ──────────────────────────────────────────────
 
     public static class HeapObjectData {
         public String id;

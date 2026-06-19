@@ -57,7 +57,7 @@ const stats = [
 export default function LandingPage() {
   return (
     <main className="min-h-screen overflow-y-auto overflow-x-hidden bg-[#f5f5f3] text-[#111111]">
-      {/* ── Navigation ───────────────────────────────────────────── */}
+      {}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[var(--border)]">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -81,9 +81,9 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Hero ─────────────────────────────────────────────────── */}
+      {}
       <section className="relative pt-36 pb-24 px-6 overflow-hidden">
-        {/* Minimalist yellow circle graphic */}
+        {}
         <div className="absolute right-[5%] md:right-[15%] top-[12%] w-64 h-64 md:w-80 md:h-80 rounded-full bg-[#eab308] opacity-90 -z-10 pointer-events-none" />
 
         <div className="relative max-w-5xl mx-auto text-left md:text-center">
@@ -105,7 +105,6 @@ export default function LandingPage() {
               program think
             </h1>
 
-
             <p className="text-base text-[#555555] max-w-2xl mx-auto mb-10 leading-relaxed font-mono">
               Java Internals Visualizer renders the JVM in real-time. Watch stack frames,
               heap objects, garbage collection, and thread states come alive — line by line.
@@ -124,7 +123,7 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          {/* Stats */}
+          {}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -141,7 +140,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────────────── */}
+      {}
       <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 select-none">
