@@ -112,6 +112,8 @@ export const useJvmStore = create<JvmStore>()(
         metaspace: false,
         gc: false,
         console: true,
+        spring: false,
+        ai: false,
       },
       togglePanel: (panel) =>
         set((state) => ({

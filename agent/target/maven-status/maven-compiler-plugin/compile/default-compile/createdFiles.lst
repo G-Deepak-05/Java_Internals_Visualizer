@@ -6,5 +6,6 @@ com/jiv/agent/snapshot/SnapshotData.class
 com/jiv/agent/emitter/EventEmitter$1.class
 com/jiv/agent/snapshot/SnapshotData$GcEventData.class
 com/jiv/agent/snapshot/SnapshotData$FrameData.class
+com/jiv/agent/snapshot/SnapshotData$SpringBeanData.class
 com/jiv/agent/listeners/ClassTransformer.class
 com/jiv/agent/emitter/EventEmitter.class

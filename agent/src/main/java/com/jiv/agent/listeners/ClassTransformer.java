@@ -44,6 +44,51 @@ public class ClassTransformer implements ClassFileTransformer {
             cr.accept(cn, ClassReader.EXPAND_FRAMES);
 
             String dottedClassName = className.replace('/', '.');
+
+            boolean isBean = false;
+            List<AnnotationNode> classAnns = new ArrayList<>();
+            if (cn.visibleAnnotations != null) classAnns.addAll(cn.visibleAnnotations);
+            if (cn.invisibleAnnotations != null) classAnns.addAll(cn.invisibleAnnotations);
+            for (AnnotationNode ann : classAnns) {
+                String desc = ann.desc;
+                if (desc != null && desc.startsWith("L") && desc.endsWith(";")) {
+                    String simpleName = getSimpleNameFromDesc(desc);
+                    if (simpleName.equals("Component") || simpleName.equals("Service") || 
+                        simpleName.equals("Repository") || simpleName.equals("Controller") || 
+                        simpleName.equals("Bean") || simpleName.equals("Configuration")) {
+                        isBean = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isBean) {
+                List<String> deps = new ArrayList<>();
+                if (cn.fields != null) {
+                    for (FieldNode fn : cn.fields) {
+                        List<AnnotationNode> fieldAnns = new ArrayList<>();
+                        if (fn.visibleAnnotations != null) fieldAnns.addAll(fn.visibleAnnotations);
+                        if (fn.invisibleAnnotations != null) fieldAnns.addAll(fn.invisibleAnnotations);
+                        for (AnnotationNode ann : fieldAnns) {
+                            String desc = ann.desc;
+                            if (desc != null && desc.startsWith("L") && desc.endsWith(";")) {
+                                String simpleName = getSimpleNameFromDesc(desc);
+                                if (simpleName.equals("Autowired") || simpleName.equals("Inject") || 
+                                    simpleName.equals("Resource")) {
+                                    String fieldTypeDesc = fn.desc;
+                                    if (fieldTypeDesc != null && fieldTypeDesc.startsWith("L") && fieldTypeDesc.endsWith(";")) {
+                                        String typeSimpleName = getSimpleNameFromDesc(fieldTypeDesc);
+                                        String depBeanName = Character.toLowerCase(typeSimpleName.charAt(0)) + typeSimpleName.substring(1);
+                                        deps.add(depBeanName);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                JivRuntime.registerSpringBean(dottedClassName, deps);
+            }
+
             for (MethodNode mn : cn.methods) {
 
                 if ((mn.access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE)) != 0) {
@@ -258,5 +303,17 @@ public class ClassTransformer implements ClassFileTransformer {
         } else if (desc.startsWith("L") || desc.startsWith("[")) {
             il.add(new VarInsnNode(Opcodes.ALOAD, index));
         }
+    }
+
+    private static String getSimpleNameFromDesc(String desc) {
+        if (desc == null || !desc.startsWith("L") || !desc.endsWith(";")) {
+            return "";
+        }
+        String clean = desc.substring(1, desc.length() - 1);
+        int slashIdx = clean.lastIndexOf('/');
+        if (slashIdx == -1) {
+            return clean;
+        }
+        return clean.substring(slashIdx + 1);
     }
 }

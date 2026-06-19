@@ -25,6 +25,10 @@ public class ThreadState {
 
     private int stackDepth;
 
+    private boolean deadlocked;
+
+    private String parentThreadName;
+
     private int priority;
 
     private boolean daemon;

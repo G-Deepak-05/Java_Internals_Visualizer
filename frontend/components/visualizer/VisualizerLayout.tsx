@@ -11,6 +11,8 @@ import { ThreadPanel } from '@/components/visualizer/ThreadPanel';
 import { BytecodePanel } from '@/components/visualizer/BytecodePanel';
 import { StringPoolPanel } from '@/components/visualizer/StringPoolPanel';
 import { MetaspacePanel } from '@/components/visualizer/MetaspacePanel';
+import { SpringPanel } from '@/components/visualizer/SpringPanel';
+import { AiAssistantPanel } from '@/components/visualizer/AiAssistantPanel';
 import { GCOverlay } from '@/components/visualizer/GCOverlay';
 import { ConsolePanel } from '@/components/visualizer/ConsolePanel';
 import { TimeTravelControls } from '@/components/controls/TimeTravelControls';
@@ -161,13 +163,15 @@ export function VisualizerLayout() {
           </div>
 
           {}
-          {(panels.threads || panels.bytecode || panels.stringpool || panels.metaspace) && (
+          {(panels.threads || panels.bytecode || panels.stringpool || panels.metaspace || panels.spring || panels.ai) && (
             <div className="flex gap-3 px-3 pb-3 overflow-x-auto flex-shrink-0"
               style={{ height: 200, minHeight: 200 }}>
               {panels.threads && <ThreadPanel />}
+              {panels.spring && <SpringPanel />}
               {panels.bytecode && <BytecodePanel />}
               {panels.stringpool && <StringPoolPanel />}
               {panels.metaspace && <MetaspacePanel />}
+              {panels.ai && <AiAssistantPanel />}
             </div>
           )}
 

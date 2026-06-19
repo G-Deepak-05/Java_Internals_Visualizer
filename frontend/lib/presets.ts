@@ -229,4 +229,142 @@ public class Main {
     }
 }`,
   },
+  {
+    id: 'deadlock',
+    title: 'Thread Deadlock',
+    description: 'Watch how two threads lock up permanently waiting for each other\'s monitors.',
+    category: 'Concurrency',
+    mainClass: 'Main',
+    code: `public class Main {
+    public static void main(String[] args) {
+        Object lock1 = new Object();
+        Object lock2 = new Object();
+
+        Thread t1 = new Thread(() -> {
+            synchronized (lock1) {
+                System.out.println("T1: Acquired lock1");
+                try { Thread.sleep(50); } catch (Exception e) {}
+                System.out.println("T1: Waiting for lock2...");
+                synchronized (lock2) {
+                    System.out.println("T1: Got both locks!");
+                }
+            }
+        }, "Worker-1");
+
+        Thread t2 = new Thread(() -> {
+            synchronized (lock2) {
+                System.out.println("T2: Acquired lock2");
+                try { Thread.sleep(50); } catch (Exception e) {}
+                System.out.println("T2: Waiting for lock1...");
+                synchronized (lock1) {
+                    System.out.println("T2: Got both locks!");
+                }
+            }
+        }, "Worker-2");
+
+        t1.start();
+        t2.start();
+        try {
+            t1.join();
+            t2.join();
+        } catch (Exception e) {}
+    }
+}`,
+  },
+  {
+    id: 'virtual-threads',
+    title: 'Structured Virtual Threads',
+    description: 'Spawn lightweight Virtual Threads and inspect their parent container scopes.',
+    category: 'Concurrency',
+    mainClass: 'Main',
+    code: `public class Main {
+    public static void main(String[] args) throws Exception {
+        System.out.println("Forking concurrent tasks...");
+        Thread v1 = Thread.ofVirtual().name("Subtask-1").start(() -> {
+            System.out.println("Subtask 1 starting...");
+            try { Thread.sleep(60); } catch (Exception e) {}
+            System.out.println("Subtask 1 complete.");
+        });
+        
+        Thread v2 = Thread.ofVirtual().name("Subtask-2").start(() -> {
+            System.out.println("Subtask 2 starting...");
+            try { Thread.sleep(60); } catch (Exception e) {}
+            System.out.println("Subtask 2 complete.");
+        });
+        
+        v1.join();
+        v2.join();
+        System.out.println("All tasks finished!");
+    }
+}`,
+  },
+  {
+    id: 'generational-gc',
+    title: 'Generational GC Aging',
+    description: 'Watch how objects age across GC sweeps and transition from Young to Survivor to Old.',
+    category: 'GC',
+    mainClass: 'Main',
+    code: `public class Main {
+    static class Customer {
+        String name;
+        Customer(String n) { this.name = n; }
+    }
+    public static void main(String[] args) {
+        Customer survivor = new Customer("Persisting Customer");
+        
+        for (int i = 0; i < 4; i++) {
+            System.out.println("GC Cycle: " + i);
+            Customer temp = new Customer("Temporary-" + i);
+            System.gc(); // Suggest GC sweep
+            try { Thread.sleep(30); } catch (Exception e) {}
+        }
+        System.out.println("Survivor aged: " + survivor.name);
+    }
+}`,
+  },
+  {
+    id: 'spring-di',
+    title: 'Spring Bean injection',
+    description: 'Simulate a Spring DI container. Map bean relationships using @Component and @Autowired.',
+    category: 'Spring',
+    mainClass: 'Main',
+    code: `@interface Component {}
+@interface Autowired {}
+
+@Component
+class OrderRepository {
+    void save() { System.out.println("Saved to database."); }
+}
+
+@Component
+class OrderService {
+    @Autowired
+    OrderRepository orderRepository;
+    
+    void process() {
+        System.out.println("Processing business logic...");
+        orderRepository.save();
+    }
+}
+
+@Component
+class OrderController {
+    @Autowired
+    OrderService orderService;
+    
+    void run() {
+        System.out.println("Controller received request");
+        orderService.process();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        OrderController controller = new OrderController();
+        controller.orderService = new OrderService();
+        controller.orderService.orderRepository = new OrderRepository();
+        controller.run();
+    }
+}`,
+  },
 ];

@@ -1,8 +1,8 @@
 'use client';
 
 import { useJvmStore } from '@/store/jvmStore';
-import type { ThreadStatus } from '@/types/jvm';
-import { Activity, Lock } from 'lucide-react';
+import type { ThreadStatus, ThreadState } from '@/types/jvm';
+import { Activity, Lock, AlertTriangle } from 'lucide-react';
 
 const STATE_COLORS: Record<ThreadStatus, { bg: string; border: string; dot: string }> = {
   RUNNABLE:      { bg: '#f0fdf4', border: '#bbf7d0', dot: '#16a34a' },
@@ -16,7 +16,74 @@ const STATE_COLORS: Record<ThreadStatus, { bg: string; border: string; dot: stri
 export function ThreadPanel() {
   const { currentSnapshot } = useJvmStore();
   const snapshot = currentSnapshot();
-  const threads = Object.values(snapshot?.threads ?? {});
+  const threads = Object.values(snapshot?.threads ?? {}) as ThreadState[];
+
+  const renderThreadCard = (thread: ThreadState, isChild: boolean = false) => {
+    let colors = STATE_COLORS[thread.state as ThreadStatus] ?? STATE_COLORS.NEW;
+    const isDeadlocked = thread.deadlocked;
+
+    const style: React.CSSProperties = isDeadlocked
+      ? { background: '#fff1f2', border: '1px solid #fda4af' }
+      : { background: colors.bg, border: `1px solid ${colors.border}` };
+
+    return (
+      <div key={thread.id}
+        className={`rounded-lg p-2.5 transition-all relative ${isChild ? 'ml-4 pl-3 border-l-2 border-dashed border-gray-300' : ''}`}
+        style={style}>
+        {isChild && (
+          <div className="absolute top-1/2 left-0 w-2.5 h-[1px] bg-gray-300 -translate-y-1/2" />
+        )}
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ background: isDeadlocked ? '#e11d48' : colors.dot }} />
+          <span className="text-xs font-semibold font-mono truncate">{thread.name}</span>
+          {isDeadlocked && (
+            <span className="text-[8px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-bold uppercase flex items-center gap-0.5 ml-auto animate-pulse">
+              <AlertTriangle size={8} /> Deadlocked
+            </span>
+          )}
+          {thread.virtual && !isDeadlocked && (
+            <span className="text-[9px] px-1 py-0.5 rounded ml-auto flex-shrink-0 border border-[#bfdbfe]"
+              style={{ background: '#eff6ff', color: '#2563eb' }}>
+              virtual
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
+          <span style={{ color: isDeadlocked ? '#e11d48' : colors.dot }}>{thread.state}</span>
+          <span>depth: {thread.stackDepth}</span>
+        </div>
+        {thread.virtual && thread.carrierThread && (
+          <div className="text-[9px] text-[#44445a] mt-1">
+            on: {thread.carrierThread}
+          </div>
+        )}
+        {thread.holdsLocks && thread.ownsMonitor && (
+          <div className="text-[9px] text-[#dc2626] mt-1.5 flex items-center gap-1 font-mono">
+            <Lock size={10} className="flex-shrink-0" />
+            <span>owns: {thread.ownsMonitor.replace('obj_', '#')}</span>
+          </div>
+        )}
+        {thread.waitingForMonitor && (
+          <div className="text-[9px] text-[#ea580c] mt-1.5 flex items-center gap-1 font-mono animate-pulse">
+            <Lock size={10} className="flex-shrink-0" />
+            <span>waiting on: {thread.waitingForMonitor.replace('obj_', '#')}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const threadMap = new Map(threads.map(t => [t.name, t]));
+  const rootThreads = threads.filter(t => !t.parentThreadName || !threadMap.has(t.parentThreadName));
+  const childThreadsMap = new Map<string, ThreadState[]>();
+  threads.forEach(t => {
+    if (t.parentThreadName && threadMap.has(t.parentThreadName)) {
+      const list = childThreadsMap.get(t.parentThreadName) ?? [];
+      list.push(t);
+      childThreadsMap.set(t.parentThreadName, list);
+    }
+  });
 
   return (
     <div className="panel flex flex-col overflow-hidden flex-shrink-0 bg-white" style={{ minWidth: 220 }}>
@@ -34,44 +101,12 @@ export function ThreadPanel() {
             <span className="text-xs text-[#44445a]">No threads</span>
           </div>
         ) : (
-          threads.map((thread) => {
-            const colors = STATE_COLORS[thread.state as ThreadStatus] ?? STATE_COLORS.NEW;
+          rootThreads.map((thread) => {
+            const children = childThreadsMap.get(thread.name) ?? [];
             return (
-              <div key={thread.id}
-                className="rounded-lg p-2.5 transition-all"
-                style={{ background: colors.bg, border: `1px solid ${colors.border}` }}>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: colors.dot }} />
-                  <span className="text-xs font-semibold font-mono truncate">{thread.name}</span>
-                  {thread.virtual && (
-                    <span className="text-[9px] px-1 py-0.5 rounded ml-auto flex-shrink-0 border border-[#bfdbfe]"
-                      style={{ background: '#eff6ff', color: '#2563eb' }}>
-                      virtual
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
-                  <span style={{ color: colors.dot }}>{thread.state}</span>
-                  <span>depth: {thread.stackDepth}</span>
-                </div>
-                {thread.virtual && thread.carrierThread && (
-                  <div className="text-[9px] text-[#44445a] mt-1">
-                    on: {thread.carrierThread}
-                  </div>
-                )}
-                {thread.holdsLocks && thread.ownsMonitor && (
-                  <div className="text-[9px] text-[#dc2626] mt-1.5 flex items-center gap-1 font-mono">
-                    <Lock size={10} className="flex-shrink-0" />
-                    <span>owns: {thread.ownsMonitor.replace('obj_', '#')}</span>
-                  </div>
-                )}
-                {thread.waitingForMonitor && (
-                  <div className="text-[9px] text-[#ea580c] mt-1.5 flex items-center gap-1 font-mono animate-pulse">
-                    <Lock size={10} className="flex-shrink-0" />
-                    <span>waiting on: {thread.waitingForMonitor.replace('obj_', '#')}</span>
-                  </div>
-                )}
+              <div key={thread.id} className="space-y-1.5">
+                {renderThreadCard(thread, false)}
+                {children.map(child => renderThreadCard(child, true))}
               </div>
             );
           })

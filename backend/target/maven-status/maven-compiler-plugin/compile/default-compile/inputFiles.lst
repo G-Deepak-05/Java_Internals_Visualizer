@@ -7,6 +7,7 @@
 /Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/GcEvent.java
 /Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/HeapObject.java
 /Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/JvmSnapshot.java
+/Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/SpringBean.java
 /Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/StackFrame.java
 /Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/model/ThreadState.java
 /Users/batman/Documents/GitHub/Java_Internals_Visualizer/backend/src/main/java/com/jiv/service/ExecutionService.java

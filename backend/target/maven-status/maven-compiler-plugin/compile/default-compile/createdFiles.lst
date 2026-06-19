@@ -1,6 +1,7 @@
 com/jiv/JivApplication.class
 com/jiv/model/HeapObject.class
 com/jiv/model/JvmSnapshot.class
+com/jiv/model/SpringBean.class
 com/jiv/service/ExecutionService.class
 com/jiv/model/ThreadState.class
 com/jiv/config/WebSocketConfig.class

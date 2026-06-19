@@ -21,9 +21,9 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
   } = data;
 
   const genColors: Record<string, { bg: string; border: string; label: string; text: string }> = {
-    YOUNG:    { bg: '#eab3080c', border: '#eab30844', label: '#eab308', text: '#ca8a04' },
-    SURVIVOR: { bg: '#2563eb0c', border: '#2563eb44', label: '#2563eb', text: '#2563eb' },
-    OLD:      { bg: '#ea580c0c', border: '#ea580c44', label: '#ea580c', text: '#ea580c' },
+    YOUNG:    { bg: '#f0fdf4', border: '#bbf7d0', label: '#16a34a', text: '#16a34a' },
+    SURVIVOR: { bg: '#fffbeb', border: '#fde68a', label: '#d97706', text: '#d97706' },
+    OLD:      { bg: '#faf5ff', border: '#e9d5ff', label: '#7c3aed', text: '#7c3aed' },
   };
   const genColor = genColors[generation] ?? genColors.YOUNG;
 
@@ -31,12 +31,12 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
     ? 'var(--accent-red)'
     : highlighted
     ? 'var(--accent-primary)'
-    : 'var(--accent-charcoal)';
+    : genColor.border;
 
   const bgColor = !reachable
     ? '#fef2f2'
     : highlighted
-    ? '#eab30808'
+    ? 'rgba(0,0,0,0.02)'
     : '#ffffff';
 
   return (
@@ -63,9 +63,9 @@ function HeapNode({ data }: { data: HeapObject & { highlighted: boolean; onHover
           <span className="text-[9px] text-[var(--text-muted)] font-mono">#{id.replace('obj_', '')}</span>
         </div>
         <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wider"
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wider transition-all duration-300"
             style={{ background: genColor.bg, color: genColor.text, borderColor: genColor.border }}>
-            {generation.toLowerCase()}
+            {generation.toLowerCase()} {data.age > 0 && `(age: ${data.age})`}
           </span>
           {refCount > 0 && (
             <span className="text-[9px] text-[var(--text-secondary)] font-mono">{refCount} ref{refCount !== 1 ? 's' : ''}</span>
@@ -185,9 +185,9 @@ function HeapCanvas() {
           <div className="ml-auto flex items-center gap-1.5 select-none">
             {(['YOUNG', 'SURVIVOR', 'OLD'] as const).map((gen) => {
               const colors: Record<string, { text: string; bg: string; border: string }> = {
-                YOUNG: { text: '#ca8a04', bg: '#eab3080c', border: '#eab30833' },
-                SURVIVOR: { text: '#2563eb', bg: '#2563eb0c', border: '#2563eb33' },
-                OLD: { text: '#ea580c', bg: '#ea580c0c', border: '#ea580c33' }
+                YOUNG: { text: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+                SURVIVOR: { text: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+                OLD: { text: '#7c3aed', bg: '#faf5ff', border: '#e9d5ff' }
               };
               const count = Object.values(heap).filter(o => o.generation === gen).length;
               if (count === 0) return null;

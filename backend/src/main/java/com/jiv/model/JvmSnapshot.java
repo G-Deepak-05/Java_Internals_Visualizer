@@ -30,6 +30,8 @@ public class JvmSnapshot {
 
     private List<String> loadedClasses = new ArrayList<>();
 
+    private List<SpringBean> springBeans = new ArrayList<>();
+
     private String currentBytecode;
 
     private List<String> methodBytecode = new ArrayList<>();
