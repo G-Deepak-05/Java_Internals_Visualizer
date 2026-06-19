@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: jiv-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/jivdb
+    username: jiv
+    password: jivpassword
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+server:
+  port: 8080
+  cors:
+    allowed-origins: "http://localhost:3000"
+
+jiv:
+  sandbox:
+    image: jiv-sandbox:latest
+    timeout-seconds: 15
+    memory-limit-mb: 256
+    cpu-limit: 0.5
+    agent-jar-path: /agent/jiv-agent.jar
+
+logging:
+  level:
+    com.jiv: DEBUG
+    org.springframework.web.socket: INFO
