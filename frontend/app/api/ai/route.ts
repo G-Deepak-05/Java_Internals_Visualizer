@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { snapshot, code, customQuery } = await req.json();
+    const { snapshot, code, customQuery, history } = await req.json();
     const apiKey = process.env.NVIDIA_API_KEY;
 
     if (!apiKey) {
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       : 'Unknown';
 
     const systemPrompt = isCustomQuery
-      ? `You are JIV (Java Internals Visualizer) Observability Coach, an expert on the Java Virtual Machine.
+      ? `You are Javision (Java Internals Visualizer) Observability Coach, an expert on the Java Virtual Machine.
 Answer the user's custom question. You have access to the current JVM execution snapshot and source code for context.
 
 IMPORTANT: You MUST ONLY answer questions related to Java, JVM internals, garbage collection, thread synchronization, memory layout, class loading, or Java programming.
@@ -66,7 +66,7 @@ Expected JSON schema:
   "details": "A detailed explanation answering the user's query, related strictly to Java or JVM (2-3 sentences), or a polite greeting/thank you/refusal.",
   "fix": "Actionable Java optimization tip or query recommendation (optional)"
 }`
-      : `You are JIV (Java Internals Visualizer) Observability Coach, an expert on the Java Virtual Machine.
+      : `You are Javision (Java Internals Visualizer) Observability Coach, an expert on the Java Virtual Machine.
 Analyze the current JVM execution snapshot and source code to explain what is happening line-by-line.
 Explain the JVM mechanics (e.g. Heap allocation, GC generations Young/Survivor/Old, lock monitor ownership, Virtual Thread mapping, or Thread deadlocks).
 Explain specifically how the active line of code maps to these JVM internals.
@@ -110,6 +110,17 @@ ${code || '// No code provided'}
 - Heap Objects: ${JSON.stringify(heap)}
 - JIT Compilation Time: ${snapshot.totalJitTimeMs}ms`;
 
+    const historyMessages: any[] = [];
+    if (history && Array.isArray(history)) {
+      const recentHistory = history.slice(-6);
+      recentHistory.forEach((item: any) => {
+        if (item.response && item.response.title !== 'AI Query Failed' && item.response.title !== 'Network Error') {
+          historyMessages.push({ role: 'user', content: item.question });
+          historyMessages.push({ role: 'assistant', content: JSON.stringify(item.response) });
+        }
+      });
+    }
+
     let response: Response | null = null;
     let errorOccurred: any = null;
     const attempts = 2;
@@ -127,6 +138,7 @@ ${code || '// No code provided'}
             model: 'meta/llama-3.1-70b-instruct',
             messages: [
               { role: 'system', content: systemPrompt },
+              ...historyMessages,
               { role: 'user', content: userQuery }
             ],
             temperature: 0.2,
@@ -188,6 +200,6 @@ ${code || '// No code provided'}
 
   } catch (err: any) {
     console.error('Error in AI Route handler:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'AI diagnostic service is temporarily unavailable. Please try again.' }, { status: 500 });
   }
 }

@@ -55,13 +55,19 @@ export function AiAssistantPanel({ code }: { code?: string }) {
     setCustomInput('');
 
     try {
+      const history = chatItems.map(item => ({
+        question: item.question,
+        response: item.response
+      }));
+
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           snapshot, 
           code,
-          customQuery: query 
+          customQuery: query,
+          history
         })
       });
       
@@ -69,21 +75,13 @@ export function AiAssistantPanel({ code }: { code?: string }) {
         const data = await res.json();
         setChatItems(prev => [...prev, { question: query, response: data }]);
       } else {
-        let errorDetail = 'Please check console logs or network tab for more details.';
-        try {
-          const errData = await res.json();
-          if (errData && errData.error) {
-            errorDetail = errData.error;
-          }
-        } catch (_) {}
-
         setChatItems(prev => [...prev, {
           question: query,
           response: {
             title: 'AI Query Failed',
-            summary: 'Failed to retrieve response for your question.',
-            details: errorDetail,
-            fix: 'Please verify your API key and connection.'
+            summary: 'The diagnostic assistant encountered an error.',
+            details: 'AI diagnostic service is temporarily unavailable. This can happen due to a temporary network issue or timeout.',
+            fix: 'Try selecting another step or re-running the program.'
           }
         }]);
       }
@@ -92,9 +90,9 @@ export function AiAssistantPanel({ code }: { code?: string }) {
         question: query,
         response: {
           title: 'Network Error',
-          summary: 'Failed to communicate with local API route.',
-          details: String(err),
-          fix: 'Make sure your next dev server is active.'
+          summary: 'Failed to communicate with the local server.',
+          details: 'The connection to the local API service could not be established.',
+          fix: 'Please check your local execution server and retry.'
         }
       }]);
     } finally {
@@ -117,7 +115,7 @@ export function AiAssistantPanel({ code }: { code?: string }) {
         title: 'Deadlock Detected',
         icon: <AlertCircle className="text-red-500" size={16} />,
         summary: `The JVM is locked. Threads ${names} are in a circular wait condition and cannot proceed.`,
-        details: 'A deadlock occurs when two or more threads are blocked forever, each waiting for a lock owned by the other. For example, Thread A holds Lock 1 and waits for Lock 2, while Thread B holds Lock 2 and waits for Lock 1. In JIV, you can locate these lock objects (highlighted in red) on the Heap Canvas and inspect which thread holds them.',
+        details: 'A deadlock occurs when two or more threads are blocked forever, each waiting for a lock owned by the other. For example, Thread A holds Lock 1 and waits for Lock 2, while Thread B holds Lock 2 and waits for Lock 1. In Javision, you can locate these lock objects (highlighted in red) on the Heap Canvas and inspect which thread holds them.',
         fix: 'Fix this by reordering your synchronized blocks so locks are always acquired in the exact same sequence across all threads.'
       };
     }
@@ -146,7 +144,7 @@ export function AiAssistantPanel({ code }: { code?: string }) {
         title: 'Unreachable Objects Detected (GC Candidates)',
         icon: <Sparkles className="text-blue-500" size={16} />,
         summary: `Object #${first.id.replace('obj_', '')} (${first.className}) has become unreachable.`,
-        details: `This object no longer has any active references pointing to it from the call stack frames or static fields (GC Roots). In JIV, unreachable objects are highlighted on the Heap Canvas and will be swept away by the Garbage Collector in the next GC sweep.`,
+        details: `This object no longer has any active references pointing to it from the call stack frames or static fields (GC Roots). In Javision, unreachable objects are highlighted on the Heap Canvas and will be swept away by the Garbage Collector in the next GC sweep.`,
         fix: 'This is normal lifecycle behavior. In Java, memory cleanup is automatic!'
       };
     }
@@ -188,27 +186,19 @@ export function AiAssistantPanel({ code }: { code?: string }) {
         const data = await res.json();
         setAiResponse(data);
       } else {
-        let errorDetail = 'Please check console logs or network tab for more details.';
-        try {
-          const errData = await res.json();
-          if (errData && errData.error) {
-            errorDetail = errData.error;
-          }
-        } catch (_) {}
-
         setAiResponse({
           title: 'AI Analysis Failed',
-          summary: 'Failed to retrieve diagnostic response from NVIDIA NIM.',
-          details: errorDetail,
-          fix: 'Please verify your API key and network connection.'
+          summary: 'The diagnostic assistant encountered an error.',
+          details: 'AI diagnostic service is temporarily unavailable. This can happen due to a temporary network issue or timeout.',
+          fix: 'Try selecting another step or re-running the program.'
         });
       }
     } catch (e) {
       setAiResponse({
         title: 'Network Error',
-        summary: 'Failed to communicate with local API route.',
-        details: String(e),
-        fix: 'Make sure your next dev server is active.'
+        summary: 'Failed to communicate with the local server.',
+        details: 'The connection to the local API service could not be established.',
+        fix: 'Please check your local execution server and retry.'
       });
     } finally {
       setLoading(false);

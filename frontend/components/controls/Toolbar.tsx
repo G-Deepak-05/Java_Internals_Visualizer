@@ -69,7 +69,7 @@ export function Toolbar({
             <Code2 size={12} color="white" strokeWidth={2.5} />
           </div>
           <span className="text-xs font-black tracking-wider uppercase hidden sm:block text-[#111111]">
-            JIV
+            Javision
           </span>
           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#e2e2dd] bg-[#fafaf9] text-[#71717a] hidden sm:inline-block">
             BETA
