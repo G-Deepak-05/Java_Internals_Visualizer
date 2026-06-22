@@ -30,12 +30,21 @@ public class ExecutionService {
     @Value("${jiv.sandbox.memory-limit-mb:256}")
     private int memoryLimitMb;
 
+    @Value("${jiv.sandbox.cpu-limit:0.5}")
+    private double cpuLimit;
+
     @Value("${jiv.sandbox.agent-jar-path}")
     private String agentJarPath;
 
     @Async
     public void executeAsync(String sessionId, ExecutionRequest request) {
         log.info("[{}] Starting execution", sessionId);
+
+        // Validate user‑provided class name to prevent command‑injection / malformed file paths
+        if (!isValidClassName(request.getMainClass())) {
+            sendError(sessionId, "Invalid class name: " + request.getMainClass());
+            return;
+        }
 
         try {
 
@@ -53,6 +62,14 @@ public class ExecutionService {
             log.error("[{}] Execution error", sessionId, e);
             sendError(sessionId, "Internal error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Simple regex validation for a Java identifier (class name). Allows letters, digits, '_' and '$',
+     * and must start with a letter, '_' or '$'. Does not support package qualifiers.
+     */
+    private boolean isValidClassName(String name) {
+        return name != null && name.matches("^[A-Za-z_$][A-Za-z0-9_$]*$");
     }
 
     private Path createWorkDir(String sessionId, String code, String mainClass) throws IOException {
@@ -234,7 +251,8 @@ public class ExecutionService {
         error.setSessionId(sessionId);
         error.setEventType("ERROR");
 
-        error.setCurrentBytecode(message);
+        // Store the error message in a dedicated field to avoid overloading the bytecode payload.
+        error.setErrorMessage(message);
         messagingTemplate.convertAndSend("/topic/jvm/" + sessionId, error);
     }
 }

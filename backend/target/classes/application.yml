@@ -24,10 +24,10 @@ spring:
 
 server:
   port: 8080
-  cors:
-    allowed-origins: "http://localhost:3000"
 
 jiv:
+  cors:
+    allowed-origins: "http://localhost:3000"
   sandbox:
     image: jiv-sandbox:latest
     timeout-seconds: 15
