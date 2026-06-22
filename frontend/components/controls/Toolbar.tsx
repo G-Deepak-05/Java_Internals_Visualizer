@@ -8,7 +8,7 @@ import { PRESET_PROGRAMS } from '@/lib/presets';
 import {
   Play, Square, Code2, Layers, MemoryStick, Activity,
   FileCode, Type, Package, ChevronDown, RotateCcw, Terminal, Zap,
-  Leaf, Sparkles,
+  Leaf, Sparkles, Network, LineChart
 } from 'lucide-react';
 import type { PanelVisibility } from '@/types/jvm';
 
@@ -24,15 +24,17 @@ interface ToolbarProps {
 }
 
 const PANEL_BUTTONS: Array<{ id: keyof PanelVisibility; icon: React.ElementType; label: string; color: string }> = [
-  { id: 'stack',      icon: Layers,      label: 'Stack',      color: '#111111' },
-  { id: 'heap',       icon: MemoryStick, label: 'Heap',       color: '#ca8a04' },
-  { id: 'threads',    icon: Activity,    label: 'Threads',    color: '#dc2626' },
-  { id: 'spring',     icon: Leaf,        label: 'Spring DI',  color: '#16a34a' },
-  { id: 'bytecode',   icon: Code2,       label: 'Bytecode',   color: '#2563eb' },
-  { id: 'stringpool', icon: Type,        label: 'Strings',    color: '#0d9488' },
-  { id: 'metaspace',  icon: Package,     label: 'Metaspace',  color: '#ea580c' },
-  { id: 'ai',         icon: Sparkles,    label: 'AI Coach',   color: '#7c3aed' },
-  { id: 'console',    icon: Terminal,    label: 'Console',    color: '#71717a' },
+  { id: 'stack',       icon: Layers,      label: 'Stack',       color: '#111111' },
+  { id: 'heap',        icon: MemoryStick, label: 'Heap',        color: '#ca8a04' },
+  { id: 'threads',     icon: Activity,    label: 'Threads',     color: '#dc2626' },
+  { id: 'spring',      icon: Leaf,        label: 'Spring DI',   color: '#16a34a' },
+  { id: 'bytecode',    icon: Code2,       label: 'Bytecode',    color: '#2563eb' },
+  { id: 'stringpool',  icon: Type,        label: 'Strings',     color: '#0d9488' },
+  { id: 'metaspace',   icon: Package,     label: 'Metaspace',   color: '#ea580c' },
+  { id: 'classloader', icon: Network,     label: 'ClassLoader', color: '#0284c7' },
+  { id: 'telemetry',   icon: LineChart,   label: 'Telemetry',   color: '#e11d48' },
+  { id: 'ai',          icon: Sparkles,    label: 'AI Coach',    color: '#7c3aed' },
+  { id: 'console',     icon: Terminal,    label: 'Console',     color: '#71717a' },
 ];
 
 export function Toolbar({

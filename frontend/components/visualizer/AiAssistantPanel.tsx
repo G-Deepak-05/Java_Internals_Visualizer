@@ -12,16 +12,24 @@ interface DiagnosticResponse {
   fix?: string;
 }
 
-export function AiAssistantPanel() {
+export function AiAssistantPanel({ code }: { code?: string }) {
   const { currentSnapshot } = useJvmStore();
   const snapshot = currentSnapshot();
 
   const [aiResponse, setAiResponse] = useState<DiagnosticResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [autoCoach, setAutoCoach] = useState(false);
 
   useEffect(() => {
     setAiResponse(null);
-  }, [snapshot?.stepIndex]);
+    if (!autoCoach || !snapshot) return;
+
+    const timer = setTimeout(() => {
+      handleExplainWithAi();
+    }, 600); // 600ms debounce
+
+    return () => clearTimeout(timer);
+  }, [snapshot?.stepIndex, autoCoach]);
 
   const analyzeState = () => {
     if (!snapshot) return null;
@@ -96,14 +104,14 @@ export function AiAssistantPanel() {
     };
   };
 
-  const handleExplainWithAi = async () => {
+  async function handleExplainWithAi() {
     if (!snapshot || loading) return;
     setLoading(true);
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ snapshot })
+        body: JSON.stringify({ snapshot, code })
       });
       if (res.ok) {
         const data = await res.json();
@@ -126,7 +134,7 @@ export function AiAssistantPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const analysis = aiResponse || analyzeState();
   const type = aiResponse ? 'ai' : (analysis as any)?.type;
@@ -197,25 +205,37 @@ export function AiAssistantPanel() {
                 </div>
               )}
 
-              {!aiResponse && (
-                <button
-                  onClick={handleExplainWithAi}
-                  disabled={loading}
-                  className="w-full mt-3 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 transition-all rounded-lg shadow-sm border border-purple-500 hover:shadow cursor-pointer select-none"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Analyzing with Llama 3.1...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={12} fill="white" />
-                      Explain Step with AI Coach
-                    </>
-                  )}
-                </button>
-              )}
+              <div className="flex flex-col gap-2 mt-3 select-none">
+                {!aiResponse && (
+                  <button
+                    onClick={handleExplainWithAi}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-white bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 transition-all rounded-lg shadow-sm border border-purple-500 hover:shadow cursor-pointer"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Analyzing with Llama 3.1...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={12} fill="white" />
+                        Explain Step with AI Coach
+                      </>
+                    )}
+                  </button>
+                )}
+
+                <label className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)] cursor-pointer py-1 font-sans">
+                  <input
+                    type="checkbox"
+                    checked={autoCoach}
+                    onChange={(e) => setAutoCoach(e.target.checked)}
+                    className="rounded border-stone-300 text-purple-600 focus:ring-purple-500 h-3 w-3 cursor-pointer"
+                  />
+                  <span>Auto-explain line changes (live AI)</span>
+                </label>
+              </div>
             </div>
           </div>
         )}

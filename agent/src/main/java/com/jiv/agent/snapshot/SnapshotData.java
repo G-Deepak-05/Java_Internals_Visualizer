@@ -35,9 +35,30 @@ public class SnapshotData {
 
     public List<String> loadedClasses = new ArrayList<>();
 
-    public List<String> methodBytecode = new ArrayList<>();
+    public List<BytecodeInstruction> methodBytecode = new ArrayList<>();
 
     public String currentBytecode;
+
+    public TelemetryData telemetry;
+
+    public List<ClassLoaderNode> classLoaders = new ArrayList<>();
+
+    public static class BytecodeInstruction {
+        public String instruction;
+        public int lineNumber;
+    }
+
+    public static class TelemetryData {
+        public long totalHeapSize;
+        public long allocationRate;
+        public Map<String, Integer> classCounts = new LinkedHashMap<>();
+    }
+
+    public static class ClassLoaderNode {
+        public String name;
+        public String parentName;
+        public List<String> loadedClasses = new ArrayList<>();
+    }
 
     public static class HeapObjectData {
         public String id;
@@ -65,6 +86,8 @@ public class SnapshotData {
         public int recursionDepth;
         public int frameIndex;
         public boolean active;
+        public boolean faulted;
+        public String exceptionMessage;
     }
 
     public static class ThreadData {

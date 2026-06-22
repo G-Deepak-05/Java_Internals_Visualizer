@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { snapshot } = await req.json();
+    const { snapshot, code } = await req.json();
     const apiKey = process.env.NVIDIA_API_KEY;
 
     if (!apiKey) {
@@ -36,16 +36,22 @@ export async function POST(req: Request) {
 
     const activeFrame = Object.values(snapshot.stacks ?? {}).flatMap((s: any) => s).find((f: any) => f.active);
 
+    const codeLines = code ? code.split('\n') : [];
+    const activeCodeLine = (snapshot.lineNumber > 0 && snapshot.lineNumber <= codeLines.length)
+      ? codeLines[snapshot.lineNumber - 1]
+      : 'Unknown';
+
     const systemPrompt = `You are JIV (Java Internals Visualizer) Observability Coach, an expert on the Java Virtual Machine.
-Analyze the current JVM execution snapshot and diagnose what is happening.
+Analyze the current JVM execution snapshot and source code to explain what is happening line-by-line.
 Explain the JVM mechanics (e.g. Heap allocation, GC generations Young/Survivor/Old, lock monitor ownership, Virtual Thread mapping, or Thread deadlocks).
+Explain specifically how the active line of code maps to these JVM internals.
 You MUST respond with a valid JSON object ONLY. Do not write any markdown wrappers (like \`\`\`json) or extra text outside the JSON.
 
 Expected JSON schema:
 {
   "title": "Short title of the JVM state",
   "summary": "One sentence summary of the current step/issue",
-  "details": "Educational explanation of the JVM internal mechanics at play (2-3 sentences)",
+  "details": "Educational explanation of the JVM internal mechanics at play relating to the source statement (2-3 sentences)",
   "fix": "Actionable optimization insight or recommendation"
 }`;
 
@@ -53,6 +59,11 @@ Expected JSON schema:
 - Active Event Type: ${snapshot.eventType}
 - Active Method: ${snapshot.currentMethod}
 - Line Number: ${snapshot.lineNumber}
+- Active Code Line: \`${activeCodeLine.trim()}\`
+- Entire Program Code:
+\`\`\`java
+${code || '// No code provided'}
+\`\`\`
 - Active Instruction: "${snapshot.currentBytecode || 'None'}"
 - Printed stdout: "${snapshot.stdout || ''}"
 - Active Stack Frame: ${activeFrame ? JSON.stringify(activeFrame) : 'None'}

@@ -29,7 +29,27 @@ export interface StackFrame {
   recursionDepth: number;
   frameIndex: number;
   active: boolean;
+  faulted?: boolean;
+  exceptionMessage?: string;
 }
+
+export interface BytecodeInstruction {
+  instruction: string;
+  lineNumber: number;
+}
+
+export interface TelemetryData {
+  totalHeapSize: number;
+  allocationRate: number;
+  classCounts: Record<string, number>;
+}
+
+export interface ClassLoaderNode {
+  name: string;
+  parentName?: string;
+  loadedClasses: string[];
+}
+
 
 export interface ThreadState {
   name: string;
@@ -79,7 +99,9 @@ export interface JvmSnapshot {
   stringPool: string[];
   loadedClasses: string[];
   currentBytecode?: string;
-  methodBytecode?: string[];
+  methodBytecode?: BytecodeInstruction[];
+  telemetry?: TelemetryData;
+  classLoaders?: ClassLoaderNode[];
   eventType?: JvmEventType;
   timestamp: number;
   stdout?: string;
@@ -131,7 +153,9 @@ export type PanelId =
   | 'gc'
   | 'console'
   | 'spring'
-  | 'ai';
+  | 'ai'
+  | 'telemetry'
+  | 'classloader';
 
 export interface PanelVisibility {
   stack: boolean;
@@ -144,6 +168,8 @@ export interface PanelVisibility {
   console: boolean;
   spring: boolean;
   ai: boolean;
+  telemetry: boolean;
+  classloader: boolean;
 }
 
 export interface PresetProgram {

@@ -27,4 +27,8 @@ public class StackFrame {
     private int frameIndex;
 
     private boolean active;
+
+    private boolean faulted;
+
+    private String exceptionMessage;
 }

@@ -34,7 +34,11 @@ public class JvmSnapshot {
 
     private String currentBytecode;
 
-    private List<String> methodBytecode = new ArrayList<>();
+    private List<BytecodeInstruction> methodBytecode = new ArrayList<>();
+
+    private TelemetryData telemetry;
+
+    private List<ClassLoaderNode> classLoaders = new ArrayList<>();
 
     private String eventType;
 

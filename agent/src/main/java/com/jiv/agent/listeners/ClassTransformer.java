@@ -44,6 +44,7 @@ public class ClassTransformer implements ClassFileTransformer {
             cr.accept(cn, ClassReader.EXPAND_FRAMES);
 
             String dottedClassName = className.replace('/', '.');
+            JivRuntime.registerClass(dottedClassName, loader);
 
             boolean isBean = false;
             List<AnnotationNode> classAnns = new ArrayList<>();
@@ -98,6 +99,27 @@ public class ClassTransformer implements ClassFileTransformer {
                 if (mn.name.equals("<clinit>")) {
                     continue;
                 }
+
+                try {
+                    List<String> insts = new ArrayList<>();
+                    List<Integer> lines = new ArrayList<>();
+                    int currentLine = 0;
+                    for (AbstractInsnNode insn : mn.instructions.toArray()) {
+                        if (insn instanceof LineNumberNode lnn) {
+                            currentLine = lnn.line;
+                        } else if (insn.getOpcode() >= 0) {
+                            String str = stringifyInstruction(insn);
+                            insts.add(str);
+                            lines.add(currentLine);
+                        }
+                    }
+                    JivRuntime.registerMethodBytecode(dottedClassName, mn.name,
+                        insts.toArray(new String[0]),
+                        lines.stream().mapToInt(Integer::intValue).toArray());
+                } catch (Exception e) {
+                    System.err.println("[JIV Agent] Failed to parse bytecode instructions for method " + mn.name + ": " + e.getMessage());
+                }
+
                 transformMethod(dottedClassName, mn);
             }
 
@@ -142,7 +164,12 @@ public class ClassTransformer implements ClassFileTransformer {
             }
         }
 
+        LabelNode startLabel = new LabelNode();
+        LabelNode endLabel = new LabelNode();
+        LabelNode handlerLabel = new LabelNode();
+
         if (insertEnterPoint != null) {
+            mn.instructions.insertBefore(insertEnterPoint, startLabel);
             org.objectweb.asm.Type[] argTypes = org.objectweb.asm.Type.getArgumentTypes(mn.desc);
             boolean isStatic = (mn.access & Opcodes.ACC_STATIC) != 0;
             String[] paramNames = new String[argTypes.length];
@@ -195,6 +222,20 @@ public class ClassTransformer implements ClassFileTransformer {
                 "(Ljava/lang/String;Ljava/lang/String;I[Ljava/lang/Object;[Ljava/lang/String;)V",
                 false));
             mn.instructions.insertBefore(insertEnterPoint, enterList);
+
+            mn.instructions.add(endLabel);
+            InsnList handler = new InsnList();
+            handler.add(handlerLabel);
+            handler.add(new InsnNode(Opcodes.DUP));
+            handler.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
+                "com/jiv/agent/listeners/JivRuntime",
+                "onMethodException",
+                "(Ljava/lang/Throwable;)V",
+                false));
+            handler.add(new InsnNode(Opcodes.ATHROW));
+            mn.instructions.add(handler);
+
+            mn.tryCatchBlocks.add(new TryCatchBlockNode(startLabel, endLabel, handlerLabel, "java/lang/Throwable"));
         }
 
         int superCallIdx = -1;
@@ -315,5 +356,19 @@ public class ClassTransformer implements ClassFileTransformer {
             return clean;
         }
         return clean.substring(slashIdx + 1);
+    }
+
+    private static String stringifyInstruction(AbstractInsnNode insn) {
+        try {
+            org.objectweb.asm.util.Textifier textifier = new org.objectweb.asm.util.Textifier();
+            org.objectweb.asm.util.TraceMethodVisitor tmv = new org.objectweb.asm.util.TraceMethodVisitor(textifier);
+            insn.accept(tmv);
+            java.io.StringWriter sw = new java.io.StringWriter();
+            java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+            textifier.print(pw);
+            return sw.toString().trim();
+        } catch (Exception e) {
+            return insn.toString();
+        }
     }
 }

@@ -31,6 +31,12 @@ public class JivRuntime {
     private static final Map<String, List<String>> registeredSpringBeans =
         new ConcurrentHashMap<>();
 
+    private static final Map<String, ClassLoader> registeredLoaders = new ConcurrentHashMap<>();
+    private static final Map<String, List<String>> loaderToClasses = new ConcurrentHashMap<>();
+    private static final Map<String, List<SnapshotData.BytecodeInstruction>> methodBytecodeMap = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> classAllocationCounts = new ConcurrentHashMap<>();
+    private static long accumulatedAllocations = 0;
+
     public static void registerSpringBean(String className, List<String> dependencies) {
         registeredSpringBeans.put(className, dependencies);
     }
@@ -164,6 +170,32 @@ public class JivRuntime {
 
         snapshot.springBeans = collectSpringBeans();
 
+        snapshot.classLoaders = collectClassLoaders();
+
+        // Telemetry
+        SnapshotData.TelemetryData td = new SnapshotData.TelemetryData();
+        long totalHeapSize = 0;
+        for (SnapshotData.HeapObjectData hod : heapRegistry.values()) {
+            totalHeapSize += hod.sizeBytes;
+        }
+        td.totalHeapSize = totalHeapSize;
+        td.allocationRate = accumulatedAllocations;
+        td.classCounts = new LinkedHashMap<>(classAllocationCounts);
+        snapshot.telemetry = td;
+
+        // Bytecode
+        String key = className + "." + methodName;
+        List<SnapshotData.BytecodeInstruction> bInsts = methodBytecodeMap.get(key);
+        if (bInsts != null) {
+            snapshot.methodBytecode = bInsts;
+            for (SnapshotData.BytecodeInstruction bi : bInsts) {
+                if (bi.lineNumber == lineNumber) {
+                    snapshot.currentBytecode = bi.instruction;
+                    break;
+                }
+            }
+        }
+
         CompilationMXBean compBean = ManagementFactory.getCompilationMXBean();
         if (compBean != null) {
             snapshot.jitCompilerName = compBean.getName();
@@ -296,14 +328,21 @@ public class JivRuntime {
 
         objectReferences.put(objectId, obj);
 
+        String className = obj.getClass().getSimpleName();
+        classAllocationCounts.put(className, classAllocationCounts.getOrDefault(className, 0) + 1);
+
         SnapshotData.HeapObjectData data = new SnapshotData.HeapObjectData();
         data.id = objectId;
-        data.className = obj.getClass().getSimpleName();
+        data.className = className;
         data.reachable = true;
         data.generation = "YOUNG";
 
         if (inst != null) {
             data.sizeBytes = inst.getObjectSize(obj);
+            accumulatedAllocations += data.sizeBytes;
+        } else {
+            data.sizeBytes = 16;
+            accumulatedAllocations += 16;
         }
 
         if (obj instanceof String s) {
@@ -532,5 +571,63 @@ public class JivRuntime {
             beans.add(bean);
         }
         return beans;
+    }
+
+    public static void registerClass(String className, ClassLoader loader) {
+        String clName = loader == null ? "Bootstrap" : loader.getClass().getName() + "@" + Integer.toHexString(loader.hashCode());
+        registeredLoaders.put(clName, loader);
+        loaderToClasses.computeIfAbsent(clName, k -> new ArrayList<>()).add(className);
+    }
+
+    public static void registerMethodBytecode(String className, String methodName, String[] instructions, int[] lines) {
+        String key = className + "." + methodName;
+        List<SnapshotData.BytecodeInstruction> list = new ArrayList<>();
+        for (int i = 0; i < instructions.length; i++) {
+            SnapshotData.BytecodeInstruction bi = new SnapshotData.BytecodeInstruction();
+            bi.instruction = instructions[i];
+            bi.lineNumber = lines[i];
+            list.add(bi);
+        }
+        methodBytecodeMap.put(key, list);
+    }
+
+    public static void onMethodException(Throwable t) {
+        String threadName = Thread.currentThread().getName();
+        Deque<SnapshotData.FrameData> stack = shadowStacks.get(threadName);
+        if (stack != null && !stack.isEmpty()) {
+            SnapshotData.FrameData frame = stack.peek();
+            frame.faulted = true;
+            frame.exceptionMessage = t.getClass().getSimpleName() + ": " + t.getMessage();
+        }
+        emitSnapshot("EXCEPTION_THROWN", t.getClass().getName(), "thrown", -1);
+    }
+
+    private static List<SnapshotData.ClassLoaderNode> collectClassLoaders() {
+        List<SnapshotData.ClassLoaderNode> list = new ArrayList<>();
+        for (Map.Entry<String, ClassLoader> entry : registeredLoaders.entrySet()) {
+            String clName = entry.getKey();
+            ClassLoader cl = entry.getValue();
+            SnapshotData.ClassLoaderNode node = new SnapshotData.ClassLoaderNode();
+            node.name = clName;
+            if (cl != null) {
+                ClassLoader parent = cl.getParent();
+                node.parentName = parent == null ? "Bootstrap" : parent.getClass().getName() + "@" + Integer.toHexString(parent.hashCode());
+            }
+            List<String> classes = loaderToClasses.get(clName);
+            if (classes != null) {
+                node.loadedClasses.addAll(classes);
+            }
+            list.add(node);
+        }
+        if (!registeredLoaders.containsKey("Bootstrap")) {
+            SnapshotData.ClassLoaderNode node = new SnapshotData.ClassLoaderNode();
+            node.name = "Bootstrap";
+            List<String> classes = loaderToClasses.get("Bootstrap");
+            if (classes != null) {
+                node.loadedClasses.addAll(classes);
+            }
+            list.add(node);
+        }
+        return list;
     }
 }

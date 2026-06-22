@@ -15,6 +15,8 @@ import { SpringPanel } from '@/components/visualizer/SpringPanel';
 import { AiAssistantPanel } from '@/components/visualizer/AiAssistantPanel';
 import { GCOverlay } from '@/components/visualizer/GCOverlay';
 import { ConsolePanel } from '@/components/visualizer/ConsolePanel';
+import { TelemetryPanel } from '@/components/visualizer/TelemetryPanel';
+import { ClassLoaderPanel } from '@/components/visualizer/ClassLoaderPanel';
 import { TimeTravelControls } from '@/components/controls/TimeTravelControls';
 import { Toolbar } from '@/components/controls/Toolbar';
 import { api } from '@/lib/api';
@@ -163,7 +165,7 @@ export function VisualizerLayout() {
           </div>
 
           {}
-          {(panels.threads || panels.bytecode || panels.stringpool || panels.metaspace || panels.spring || panels.ai) && (
+          {(panels.threads || panels.bytecode || panels.stringpool || panels.metaspace || panels.spring || panels.ai || panels.classloader || panels.telemetry) && (
             <div className="flex gap-3 px-3 pb-3 overflow-x-auto flex-shrink-0"
               style={{ height: 200, minHeight: 200 }}>
               {panels.threads && <ThreadPanel />}
@@ -171,7 +173,9 @@ export function VisualizerLayout() {
               {panels.bytecode && <BytecodePanel />}
               {panels.stringpool && <StringPoolPanel />}
               {panels.metaspace && <MetaspacePanel />}
-              {panels.ai && <AiAssistantPanel />}
+              {panels.classloader && <ClassLoaderPanel />}
+              {panels.telemetry && <TelemetryPanel />}
+              {panels.ai && <AiAssistantPanel code={code} />}
             </div>
           )}
 
