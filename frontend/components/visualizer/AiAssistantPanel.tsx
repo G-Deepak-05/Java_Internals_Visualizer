@@ -1,9 +1,9 @@
 'use client';
 
 import { useJvmStore } from '@/store/jvmStore';
-import { Sparkles, Cpu, AlertCircle, ThumbsUp, HelpCircle } from 'lucide-react';
+import { Sparkles, Cpu, AlertCircle, ThumbsUp, HelpCircle, Send, MessageSquare } from 'lucide-react';
 import type { ThreadState, HeapObject } from '@/types/jvm';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface DiagnosticResponse {
   title: string;
@@ -16,12 +16,21 @@ export function AiAssistantPanel({ code }: { code?: string }) {
   const { currentSnapshot } = useJvmStore();
   const snapshot = currentSnapshot();
 
+  interface ChatItem {
+    question: string;
+    response: DiagnosticResponse;
+  }
+
   const [aiResponse, setAiResponse] = useState<DiagnosticResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [autoCoach, setAutoCoach] = useState(false);
+  const [customInput, setCustomInput] = useState('');
+  const [chatItems, setChatItems] = useState<ChatItem[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setAiResponse(null);
+    setChatItems([]);
     if (!autoCoach || !snapshot) return;
 
     const timer = setTimeout(() => {
@@ -30,6 +39,68 @@ export function AiAssistantPanel({ code }: { code?: string }) {
 
     return () => clearTimeout(timer);
   }, [snapshot?.stepIndex, autoCoach]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatItems.length]);
+
+  async function handleCustomQuestionSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const query = customInput.trim();
+    if (!query || loading) return;
+
+    setLoading(true);
+    setCustomInput('');
+
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          snapshot, 
+          code,
+          customQuery: query 
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setChatItems(prev => [...prev, { question: query, response: data }]);
+      } else {
+        let errorDetail = 'Please check console logs or network tab for more details.';
+        try {
+          const errData = await res.json();
+          if (errData && errData.error) {
+            errorDetail = errData.error;
+          }
+        } catch (_) {}
+
+        setChatItems(prev => [...prev, {
+          question: query,
+          response: {
+            title: 'AI Query Failed',
+            summary: 'Failed to retrieve response for your question.',
+            details: errorDetail,
+            fix: 'Please verify your API key and connection.'
+          }
+        }]);
+      }
+    } catch (err) {
+      setChatItems(prev => [...prev, {
+        question: query,
+        response: {
+          title: 'Network Error',
+          summary: 'Failed to communicate with local API route.',
+          details: String(err),
+          fix: 'Make sure your next dev server is active.'
+        }
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const analyzeState = () => {
     if (!snapshot) return null;
@@ -117,11 +188,19 @@ export function AiAssistantPanel({ code }: { code?: string }) {
         const data = await res.json();
         setAiResponse(data);
       } else {
+        let errorDetail = 'Please check console logs or network tab for more details.';
+        try {
+          const errData = await res.json();
+          if (errData && errData.error) {
+            errorDetail = errData.error;
+          }
+        } catch (_) {}
+
         setAiResponse({
           title: 'AI Analysis Failed',
           summary: 'Failed to retrieve diagnostic response from NVIDIA NIM.',
-          details: 'Check if your API key is correctly configured in .env.local.',
-          fix: 'Please verify configuration and try again.'
+          details: errorDetail,
+          fix: 'Please verify your API key and network connection.'
         });
       }
     } catch (e) {
@@ -148,7 +227,7 @@ export function AiAssistantPanel({ code }: { code?: string }) {
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 select-text">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 select-text">
         {!analysis ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center text-[var(--text-secondary)]">
             <Sparkles size={20} className="text-[#a855f7]" />
@@ -239,6 +318,98 @@ export function AiAssistantPanel({ code }: { code?: string }) {
             </div>
           </div>
         )}
+
+        {/* Custom chat items log */}
+        {chatItems.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-stone-150 space-y-5">
+            <div className="flex items-center justify-between select-none">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5">
+                <MessageSquare size={11} className="text-[#a855f7]" />
+                Conversational Log
+              </span>
+              <button 
+                onClick={() => setChatItems([])}
+                className="text-[10px] text-[#7c3aed] hover:text-[#6d28d9] hover:underline cursor-pointer"
+              >
+                Clear History
+              </button>
+            </div>
+
+            {chatItems.map((item, idx) => (
+              <div key={idx} className="space-y-3">
+                {/* Question bubble */}
+                <div className="flex justify-end">
+                  <div className="bg-[#f3e8ff] text-[#581c87] border border-[#e9d5ff] rounded-2xl rounded-tr-sm px-3.5 py-2 max-w-[90%] text-xs font-sans shadow-sm">
+                    <p className="font-bold text-[9px] text-[#7c3aed] uppercase mb-0.5 tracking-wider select-none">You Asked</p>
+                    {item.question}
+                  </div>
+                </div>
+
+                {/* AI response card */}
+                <div className="rounded-xl p-4 border border-purple-200 bg-[#faf5ff] transition-all">
+                  <div className="flex items-center gap-1.5 mb-1.5 select-none">
+                    <Sparkles className="text-[#a855f7]" size={14} />
+                    <span className="text-xs font-bold text-[var(--text-primary)]">
+                      {item.response.title}
+                    </span>
+                  </div>
+
+                  <p className="text-xs font-semibold text-[var(--text-primary)] leading-relaxed mb-3">
+                    {item.response.summary}
+                  </p>
+
+                  <div className="space-y-3 pl-1">
+                    <div>
+                      <h4 className="text-[9px] uppercase font-bold tracking-wider text-[var(--text-secondary)] mb-0.5 select-none">
+                        How It Works
+                      </h4>
+                      <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed font-sans">
+                        {item.response.details}
+                      </p>
+                    </div>
+
+                    {item.response.fix && (
+                      <div>
+                        <h4 className="text-[9px] uppercase font-bold tracking-wider text-[var(--text-secondary)] mb-0.5 select-none">
+                          Recommendation / Insight
+                        </h4>
+                        <p className="text-[11px] text-[#581c87] bg-[#f3e8ff] px-2.5 py-1 rounded-lg border border-[#e9d5ff] leading-relaxed font-sans font-medium">
+                          💡 {item.response.fix}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Chat / Custom Question Input Footer */}
+      <div className="p-3 border-t border-stone-100 bg-[#faf5ff]/40 select-none">
+        <form onSubmit={handleCustomQuestionSubmit} className="flex gap-2 items-center">
+          <input
+            type="text"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            disabled={loading}
+            placeholder="Ask AI about Java or current state..."
+            className="flex-1 px-3 py-1.5 text-[11px] rounded-lg border border-stone-200 focus:outline-none focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] bg-white text-[var(--text-primary)] placeholder-stone-400 disabled:opacity-70 transition-all font-sans"
+          />
+          <button
+            type="submit"
+            disabled={loading || !customInput.trim()}
+            className="p-1.5 text-white bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-40 transition-all rounded-lg cursor-pointer flex items-center justify-center shadow-sm hover:shadow"
+            title="Ask custom question"
+          >
+            {loading ? (
+              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Send size={12} fill="white" />
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );
