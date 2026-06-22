@@ -256,9 +256,10 @@ JIV interfaces with `ThreadMXBean` to monitor concurrency execution:
 
 ### AI Observability Coach (Live NIM Integration)
 
-- **Prompt Construction**: Serializes the active JVM snapshot (threads, call stack, locks, unreachable heap objects) into structured JSON.
-- **Nvidia NIM Proxy**: Passes the snapshot context to a secure Next.js API route (`app/api/ai/route.ts`), which queries `meta/llama-3.1-70b-instruct` using `NVIDIA_API_KEY`.
-- **Diagnostic Feedback**: Displays live, context-aware explanations of thread deadlocks, GC events, and heap references directly to the user.
+- **Source Code Context**: Integrates the user's active Java source statement and full program code directly into the AI prompt payload alongside the JVM snapshot data.
+- **Nvidia NIM Proxy**: Relays the data to a secure Next.js API route (`app/api/ai/route.ts`), which queries `meta/llama-3.1-70b-instruct` using `NVIDIA_API_KEY`.
+- **Auto-Explain Mode**: Includes an "Auto-explain" checkbox in the UI. When active, it automatically triggers a debounced (600ms) Llama diagnostic fetch on every line/step change, preventing API spam while time-traveling.
+- **Contextual Explanations**: Diagnoses the exact cause-and-effect relationship between the user's Java statement and JVM heap allocations, stack unwinding, deadlocks, lock monitors, or thread carriers.
 
 ### Time-Travel Debugging
 

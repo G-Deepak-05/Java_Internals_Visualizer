@@ -131,17 +131,133 @@ function HeapCanvas() {
     const objs = Object.values(heap);
     const nodes: Node[] = [];
     const edges: Edge[] = [];
-    const COLS = 3;
-    const X_GAP = 260, Y_GAP = 200;
 
-    objs.forEach((obj, i) => {
-      const col = i % COLS;
-      const row = Math.floor(i / COLS);
+    // Visual lane partitions
+    nodes.push(
+      {
+        id: 'bg-eden',
+        position: { x: 10, y: 10 },
+        data: { label: '' },
+        style: {
+          width: 320,
+          height: 680,
+          background: 'rgba(22, 163, 74, 0.02)',
+          border: '1px dashed rgba(22, 163, 74, 0.12)',
+          borderRadius: '8px',
+          pointerEvents: 'none',
+          zIndex: -1,
+        },
+        draggable: false,
+        selectable: false,
+      },
+      {
+        id: 'bg-survivor',
+        position: { x: 350, y: 10 },
+        data: { label: '' },
+        style: {
+          width: 320,
+          height: 680,
+          background: 'rgba(217, 119, 6, 0.02)',
+          border: '1px dashed rgba(217, 119, 6, 0.12)',
+          borderRadius: '8px',
+          pointerEvents: 'none',
+          zIndex: -1,
+        },
+        draggable: false,
+        selectable: false,
+      },
+      {
+        id: 'bg-old',
+        position: { x: 690, y: 10 },
+        data: { label: '' },
+        style: {
+          width: 320,
+          height: 680,
+          background: 'rgba(124, 58, 237, 0.02)',
+          border: '1px dashed rgba(124, 58, 237, 0.12)',
+          borderRadius: '8px',
+          pointerEvents: 'none',
+          zIndex: -1,
+        },
+        draggable: false,
+        selectable: false,
+      }
+    );
+
+    // Lane Headers
+    nodes.push(
+      {
+        id: 'lbl-eden',
+        position: { x: 25, y: 25 },
+        data: { label: 'Eden Space (Young Gen)' },
+        style: {
+          border: 'none',
+          background: 'transparent',
+          fontWeight: 700,
+          fontSize: '10px',
+          color: '#16a34a',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          pointerEvents: 'none',
+        },
+        draggable: false,
+        selectable: false,
+      },
+      {
+        id: 'lbl-survivor',
+        position: { x: 365, y: 25 },
+        data: { label: 'Survivor Space (S0 / S1)' },
+        style: {
+          border: 'none',
+          background: 'transparent',
+          fontWeight: 700,
+          fontSize: '10px',
+          color: '#d97706',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          pointerEvents: 'none',
+        },
+        draggable: false,
+        selectable: false,
+      },
+      {
+        id: 'lbl-old',
+        position: { x: 705, y: 25 },
+        data: { label: 'Tenured Space (Old Gen)' },
+        style: {
+          border: 'none',
+          background: 'transparent',
+          fontWeight: 700,
+          fontSize: '10px',
+          color: '#7c3aed',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          pointerEvents: 'none',
+        },
+        draggable: false,
+        selectable: false,
+      }
+    );
+
+    const countByGen: Record<string, number> = { YOUNG: 0, SURVIVOR: 0, OLD: 0 };
+
+    objs.forEach((obj) => {
+      const gen = obj.generation ?? 'YOUNG';
+      const col = countByGen[gen] % 2;
+      const row = Math.floor(countByGen[gen] / 2);
+      countByGen[gen]++;
+
+      let baseX = 20;
+      if (gen === 'SURVIVOR') {
+        baseX = 360;
+      } else if (gen === 'OLD') {
+        baseX = 700;
+      }
 
       nodes.push({
         id: obj.id,
         type: 'heapObject',
-        position: { x: col * X_GAP + 20, y: row * Y_GAP + 20 },
+        position: { x: baseX + col * 150, y: 65 + row * 165 },
         data: {
           ...obj,
           highlighted: obj.id === highlightedObjectId,
@@ -156,15 +272,15 @@ function HeapCanvas() {
             source: obj.id,
             target: value,
             label: fieldName,
-            labelStyle: { fontSize: 9, fill: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' },
-            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.9 },
+            labelStyle: { fontSize: 8, fill: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' },
+            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.95 },
             markerEnd: {
               type: MarkerType.ArrowClosed,
               color: 'var(--accent-charcoal)',
-              width: 14,
-              height: 14,
+              width: 12,
+              height: 12,
             },
-            style: { stroke: 'var(--accent-charcoal)', strokeWidth: 1.5 },
+            style: { stroke: 'var(--accent-charcoal)', strokeWidth: 1.2 },
             animated: obj.id === highlightedObjectId || value === highlightedObjectId,
           });
         }

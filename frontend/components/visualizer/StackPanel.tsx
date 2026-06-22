@@ -33,6 +33,7 @@ function ValueDisplay({ value }: { value: unknown }) {
 }
 
 function FrameCard({ frame, depth }: { frame: StackFrame; depth: number }) {
+  const isFaulted = frame.faulted;
   const color = getDepthColor(depth);
   const locals = Object.entries(frame.locals ?? {});
   const hasLocals = locals.length > 0;
@@ -46,16 +47,27 @@ function FrameCard({ frame, depth }: { frame: StackFrame; depth: number }) {
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       className="stack-frame"
       style={{
-        borderLeft: `4px solid ${color.borderLeft}`,
-        boxShadow: frame.active ? `0 4px 12px rgba(0,0,0,0.05)` : 'none',
-        borderColor: frame.active ? 'var(--border-bright)' : 'var(--border)',
+        borderLeft: isFaulted ? `4px solid #ef4444` : `4px solid ${color.borderLeft}`,
+        boxShadow: isFaulted
+          ? '0 4px 12px rgba(239, 68, 68, 0.08)'
+          : frame.active
+          ? `0 4px 12px rgba(0,0,0,0.05)`
+          : 'none',
+        borderColor: isFaulted
+          ? '#fecaca'
+          : frame.active
+          ? 'var(--border-bright)'
+          : 'var(--border)',
       }}
     >
-      {}
-      <div className="stack-frame-header flex items-center justify-between"
-        style={{ background: frame.active ? '#ffffff' : '#fafaf9' }}>
+      <div
+        className="stack-frame-header flex items-center justify-between"
+        style={{
+          background: isFaulted ? '#fff5f5' : frame.active ? '#ffffff' : '#fafaf9',
+        }}
+      >
         <div className="flex items-center gap-2 min-w-0">
-          {frame.active && (
+          {frame.active && !isFaulted && (
             <motion.div
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{ background: color.borderLeft }}
@@ -63,23 +75,40 @@ function FrameCard({ frame, depth }: { frame: StackFrame; depth: number }) {
               transition={{ duration: 1.5, repeat: Infinity }}
             />
           )}
+          {isFaulted && (
+            <motion.div
+              className="w-2 h-2 rounded-full flex-shrink-0 bg-[#ef4444]"
+              animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+            />
+          )}
           <span className="truncate font-bold text-xs text-[var(--text-primary)]">
             {frame.className}.{frame.methodName}()
           </span>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {frame.recursionDepth > 0 && (
+          {isFaulted ? (
+            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider bg-red-100 text-red-600 border border-red-200">
+              Faulted
+            </span>
+          ) : frame.recursionDepth > 0 ? (
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider"
               style={{ background: color.badgeBg, color: color.text }}>
               depth {frame.recursionDepth}
             </span>
-          )}
+          ) : null}
           <span className="text-[10px] font-mono text-[var(--text-secondary)] font-bold">line {frame.lineNumber}</span>
         </div>
       </div>
 
-      {}
-      {hasLocals && (
+      {isFaulted && frame.exceptionMessage && (
+        <div className="stack-frame-body border-t border-[#fecaca] bg-[#fff5f5] p-2 flex flex-col gap-0.5">
+          <span className="text-[#dc2626] font-bold text-[8px] uppercase tracking-wider font-mono">⚠️ Exception Propagating</span>
+          <span className="text-[11px] font-mono text-red-700">{frame.exceptionMessage}</span>
+        </div>
+      )}
+
+      {hasLocals && !isFaulted && (
         <div className="stack-frame-body p-2 border-t border-[var(--border)] bg-white">
           <div className="grid grid-cols-2 gap-1.5 font-mono text-[10px]">
             {locals.map(([name, value]) => (
@@ -92,8 +121,7 @@ function FrameCard({ frame, depth }: { frame: StackFrame; depth: number }) {
         </div>
       )}
 
-      {}
-      {frame.returnValue !== undefined && frame.returnValue !== null && (
+      {frame.returnValue !== undefined && frame.returnValue !== null && !isFaulted && (
         <div className="stack-frame-body border-t border-[var(--border)] bg-[#f0fdf4] p-2 flex items-center justify-between">
           <span className="text-[#16a34a] font-bold text-[10px] uppercase tracking-wider font-mono">return →</span>
           <ValueDisplay value={frame.returnValue} />

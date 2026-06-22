@@ -90,6 +90,21 @@ export function CodeEditor({ code, onChange, language = 'java', readOnly = false
     };
   }, [snapshot?.lineNumber, currentStep, snapshots]);
 
+  useEffect(() => {
+    const handleJump = (e: Event) => {
+      const customEvent = e as CustomEvent<{ line: number }>;
+      if (editorRef.current && customEvent.detail.line > 0) {
+        try {
+          editorRef.current.revealLineInCenter(customEvent.detail.line);
+          editorRef.current.setPosition({ lineNumber: customEvent.detail.line, column: 1 });
+          editorRef.current.focus();
+        } catch {}
+      }
+    };
+    window.addEventListener('editor-jump-to-line', handleJump);
+    return () => window.removeEventListener('editor-jump-to-line', handleJump);
+  }, []);
+
   return (
     <div className="flex-1 overflow-hidden flex flex-col" style={{ minHeight: 0 }}>
       {}
