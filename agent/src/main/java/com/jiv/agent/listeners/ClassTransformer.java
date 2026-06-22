@@ -19,7 +19,8 @@ public class ClassTransformer implements ClassFileTransformer {
     private static final Set<String> EXCLUDED_PREFIXES = Set.of(
         "java/", "javax/", "jdk/", "sun/", "com/sun/",
         "org/objectweb/asm/", "com/google/gson/",
-        "com/jiv/agent/"
+        "com/jiv/agent/",
+        "jdk/internal/", "org/apache/", "com/google/"
     );
 
     public ClassTransformer(EventEmitter emitter, Instrumentation inst) {

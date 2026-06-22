@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       waitingOn: t.waitingForMonitor,
       owns: t.ownsMonitor,
       deadlocked: t.deadlocked
-    })) : [];
+    })).slice(0, 20) : [];
 
     const heap = snapshot && snapshot.heap ? Object.values(snapshot.heap).map((o: any) => ({
       id: o.id,
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       age: o.age,
       isString: o.isString,
       stringValue: o.stringValue
-    })) : [];
+    })).slice(0, 30) : [];
 
     const activeFrame = snapshot && snapshot.stacks 
       ? Object.values(snapshot.stacks).flatMap((s: any) => s).find((f: any) => f.active) 
@@ -132,7 +132,7 @@ ${code || '// No code provided'}
             temperature: 0.2,
             max_tokens: 500
           }),
-          signal: AbortSignal.timeout(12000) // 12 seconds timeout per attempt
+          signal: AbortSignal.timeout(24000) // 24 seconds timeout per attempt
         });
         if (response.ok) {
           errorOccurred = null;

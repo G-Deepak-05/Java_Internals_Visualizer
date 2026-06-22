@@ -34,6 +34,9 @@ public class JvmSnapshot {
 
     private String currentBytecode;
 
+    // When an error occurs during execution, the message is stored here.
+    private String errorMessage;
+
     private List<BytecodeInstruction> methodBytecode = new ArrayList<>();
 
     private TelemetryData telemetry;
