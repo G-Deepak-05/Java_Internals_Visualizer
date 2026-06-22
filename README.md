@@ -108,6 +108,15 @@ Frontend (Next.js + Zustand)
 
 ---
 
+## Configuration
+
+- **CORS Origins**: The allowed origins for the backend API are now configurable via the `jiv.cors.allowed-origins` property in `application.yml`. This replaces the previous hard‑coded `http://localhost:3000` value.
+- **CPU Limit**: The sandbox CPU limit can be adjusted with the `jiv.sandbox.cpu-limit` property (default `0.5`).
+- **Class Name Validation**: `ExecutionService` now validates the user‑provided main class name to guard against malformed inputs.
+- **Error Reporting**: `JvmSnapshot` includes an `errorMessage` field to convey execution errors without overloading the bytecode payload.
+
+---
+
 ## Project Structure
 
 ```
