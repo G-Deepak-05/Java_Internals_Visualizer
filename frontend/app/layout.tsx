@@ -2,15 +2,15 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Java Internals Visualizer — See the JVM, Live',
+  title: 'Javision — See the JVM, Live',
   description:
-    'JIV is a real-time educational platform that visualizes how Java programs execute inside the JVM. See stack frames, heap objects, garbage collection, and thread states come alive.',
+    'Javision is a real-time educational platform that visualizes how Java programs execute inside the JVM. See stack frames, heap objects, garbage collection, and thread states come alive.',
   keywords: [
     'Java', 'JVM', 'visualizer', 'debugger', 'heap', 'stack', 'garbage collection',
     'Java internals', 'bytecode', 'education', 'programming',
   ],
   openGraph: {
-    title: 'Java Internals Visualizer',
+    title: 'Javision',
     description: 'Chrome DevTools for the JVM',
     type: 'website',
   },
